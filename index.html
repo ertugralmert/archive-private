@@ -50,9 +50,14 @@
   .lede{color:var(--muted);font-size:14px}
   .theme-btn{flex:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--muted);font-size:14px;background:var(--panel)}
   .theme-btn:hover{color:var(--ink);border-color:var(--muted)}
+  .head-actions{display:flex;gap:8px;flex:none}
+  #overviewBtn{font-size:13px}
+  #overviewBtn .o{display:inline-block;transition:transform .15s}
+  .overview{margin-top:26px;overflow:hidden}
+  .overview.collapsed{display:none}
 
   /* dashboard */
-  .dash{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:26px 0 0}
+  .dash{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
   .stat .n{font-size:22px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em}
   .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
@@ -186,20 +191,24 @@
     <h1>Document Archive</h1>
     <p class="lede">Guides, notes and documents — searchable, taggable, all in one place.</p>
   </div>
-  <button class="theme-btn" id="themeBtn" title="toggle theme">◐</button>
+  <div class="head-actions">
+    <button class="theme-btn" id="overviewBtn" title="show / hide overview">▾ overview</button>
+    <button class="theme-btn" id="themeBtn" title="toggle theme">◐</button>
+  </div>
 </header>
 
 <div class="wrap">
-  <div class="dash">
-    <div class="stat"><div class="n" id="sFolders">–</div><div class="l">folders</div></div>
-    <div class="stat"><div class="n" id="sFiles">–</div><div class="l">files</div></div>
-    <div class="stat"><div class="n" id="sSize">–</div><div class="l">total size</div></div>
-    <div class="stat"><div class="n" id="sStars">–</div><div class="l">favourites</div></div>
-  </div>
-
-  <div class="recent" id="recent">
-    <h3>Recently added</h3>
-    <div class="chips" id="recentChips"></div>
+  <div class="overview" id="overview">
+    <div class="dash">
+      <div class="stat"><div class="n" id="sFolders">–</div><div class="l">folders</div></div>
+      <div class="stat"><div class="n" id="sFiles">–</div><div class="l">files</div></div>
+      <div class="stat"><div class="n" id="sSize">–</div><div class="l">total size</div></div>
+      <div class="stat"><div class="n" id="sStars">–</div><div class="l">favourites</div></div>
+    </div>
+    <div class="recent" id="recent">
+      <h3>Recently added</h3>
+      <div class="chips" id="recentChips"></div>
+    </div>
   </div>
 
   <div class="tree">
@@ -482,6 +491,9 @@ $("recentChips").addEventListener("click", e=>{ const c=e.target.closest("[data-
 /* ============ theme ============ */
 function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); $("themeBtn").textContent=t==="light"?"☀":"◐"; try{localStorage.setItem("archive_theme",t);}catch(e){} }
 $("themeBtn").onclick=()=>applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"dark":"light");
+
+function applyOverview(open){ $("overview").classList.toggle("collapsed",!open); $("overviewBtn").innerHTML=(open?"▾":"▸")+" overview"; try{localStorage.setItem("archive_overview",open?"1":"0");}catch(e){} }
+$("overviewBtn").onclick=()=>applyOverview($("overview").classList.contains("collapsed"));
 
 /* ============ modal ============ */
 function openModal(h){ $("modalBox").innerHTML=h; $("overlay").classList.add("open"); }
@@ -863,6 +875,7 @@ async function uploadZipExtracted(file, baseFolder){
 /* ============ init ============ */
 (async function init(){
   applyTheme((()=>{try{return localStorage.getItem("archive_theme")}catch(e){return null}})()|| (matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"));
+  applyOverview((()=>{try{return localStorage.getItem("archive_overview")==="1"}catch(e){return false}})());
   const b=$("repoBadge"); b.textContent=CONFIG.label||""; b.className="badge "+(CONFIG.label==="private"?"priv":"pub");
   $("year").textContent=new Date().getFullYear();
   try{ const saved=localStorage.getItem(TKEY); if(saved&&live()){ TOKEN=saved; const r=await fetch(api(""),{headers:headers()}); if(r.ok)$("adminActions").hidden=false; else {TOKEN=null;localStorage.removeItem(TKEY);} } }catch(e){}
