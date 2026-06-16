@@ -1,0 +1,94 @@
+═══════════════════════════════════════════════════════════════════════
+  AMA LIVE CONSOLE — DEPLOY (port 8090, ama-portal'la çakışmaz)
+═══════════════════════════════════════════════════════════════════════
+
+  🖥️  [MAC]  = kendi Macbook'unda Terminal'de
+  ☁️  [OCP]  = oc/podman komutu (Mac'ten OCP'ye konuşur, yine MAC terminalinde)
+
+  NOT: Hepsi MAC terminalinde çalışır! "OCP" demek, komutun OCP'ye
+       gittiği anlamına gelir (oc/podman), ayrı bir yere geçmen gerekmez.
+       ama-portal'ı nasıl yaptıysan birebir aynı yer.
+
+  ⚠️ ÖNEMLİ: Yeni imajı 8090 portuyla TEKRAR build etmen lazım
+     (port değişti). Aşağıda ADIM 0 bunu yapıyor.
+
+
+╔═══ 0. [MAC] YENİ İMAJI BUILD ET (port 8090 ile) ══════════════════════╗
+
+  # Yeni paketi aç (8090'lı Containerfile + yaml):
+  cd ~/Desktop/ama-live
+  rm -rf alc-build
+  unzip -o ama-live-console.zip -d alc-build
+  cd alc-build/backend
+
+  # Veriyi hazırla (imaja gömülecek):
+  python3 offline.py prepare /Users/mertugral/Desktop/SGK-ama-portal/bulkExport_AMA_sha1_1_1779448965556.zip
+  cd ..
+
+  # Build (amd64 ŞART):
+  podman build --platform linux/amd64 -t ama-live-console:v1.0 -f Containerfile .
+
+
+╔═══ 1. [MAC→OCP] LOGIN (zaten login'sin, kontrol et) ══════════════════╗
+
+  oc whoami            # → o-mertugral
+  oc project ama-portal
+
+
+╔═══ 2. [MAC→OCP] REGISTRY LOGIN ═══════════════════════════════════════╗
+
+  REGISTRY=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
+  echo "Registry: $REGISTRY"
+  podman login -u $(oc whoami) -p $(oc whoami -t) $REGISTRY --tls-verify=false
+
+
+╔═══ 3. [MAC] MİMARİ DOĞRULA ═══════════════════════════════════════════╗
+
+  podman inspect ama-live-console:v1.0 | grep -i architecture
+  # → "Architecture": "amd64"
+
+
+╔═══ 4. [MAC→OCP] TAG + PUSH ═══════════════════════════════════════════╗
+
+  podman tag ama-live-console:v1.0 $REGISTRY/ama-portal/ama-live-console:v1.0
+  podman push $REGISTRY/ama-portal/ama-live-console:v1.0 --tls-verify=false
+
+
+╔═══ 5. [MAC→OCP] DEPLOY ═══════════════════════════════════════════════╗
+
+  oc apply -f openshift-deploy.yaml
+  oc rollout status deployment/ama-live-console --timeout=5m
+
+
+╔═══ 6. [MAC→OCP] TEST ═════════════════════════════════════════════════╗
+
+  oc get pods | grep ama-live-console        # → 1/1 Running
+  oc logs deployment/ama-live-console --tail=20
+  oc get route ama-live-console -o jsonpath='{.spec.host}'
+  echo ""
+  # → ama-live-console-ama-portal.apps.ocpdev.sgk.intra
+
+  Tarayıcı: https://ama-live-console-ama-portal.apps.ocpdev.sgk.intra
+
+
+╔═══ CANLI MODA ÇEVİRME (istersen) ═════════════════════════════════════╗
+
+  oc set env deployment/ama-live-console AMA_OFFLINE- \
+    AMA_SERVER=https://openapi.ibm-ama-ama.apps.ocpdev.sgk.intra/lands_advisor
+  oc rollout status deployment/ama-live-console --timeout=5m
+
+
+╔═══ SONRAKİ VERSİYONLAR ═══════════════════════════════════════════════╗
+
+  # Sadece 0(build)→2→3→4→5, tag'i değiştir (v1.1, v1.2...)
+
+
+  ┌─────────────────────────────────────────────────┐
+  │  ama-portal:        port 8080 (dokunma, çalışıyor)│
+  │  ama-live-console:  port 8090 (yeni, ayrı pod)   │
+  │  → İkisi aynı projede, çakışmaz                  │
+  └─────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════
+  Designed & developed by Mert Ertuğral · IBM Expert Labs
+═══════════════════════════════════════════════════════════════════════
