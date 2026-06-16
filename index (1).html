@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mert@archive</title>
+<meta name="description" content="Personal document archive by Mert Ertugral.">
+
+<!-- ============================================================
+     SETUP (one time)
+       Fill CONFIG below: GitHub username + repo + label.
+       Make a "docs" folder in the repo; nest folders freely.
+     ADMIN (edit from the browser)
+       Click "admin" (bottom), paste a GitHub token with
+       Contents: Read & write on this repo. Create folders, write
+       notes, drag-drop uploads, rename, delete, tag, favourite.
+     ============================================================ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0E1116; --panel:#12161D; --panel2:#161B23; --line:#222A35;
+    --ink:#D6DBE1; --muted:#788292; --dim:#4E5866;
+    --accent:#5C9CFF; --ok:#3FB68B; --danger:#E06C75; --warn:#E5A663; --star:#E5C158;
+  }
+  html[data-theme="light"]{
+    --bg:#F4F6F8; --panel:#FFFFFF; --panel2:#FFFFFF; --line:#E1E5EA;
+    --ink:#1B2128; --muted:#5B6470; --dim:#8A94A2;
+    --accent:#0F62FE; --ok:#1A8F66; --danger:#D2453E; --warn:#B5701B; --star:#C99A1E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+  html,body{background:var(--bg)}
+  body{color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .wrap{max-width:1600px;margin:0 auto;padding:0 40px}
+
+  header{padding:46px 0 0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .prompt{color:var(--muted);font-size:13px;font-family:'IBM Plex Mono',monospace}
+  .prompt b{color:var(--accent);font-weight:500}
+  .badge{font-size:11.5px;border:1px solid var(--line);border-radius:5px;padding:2px 9px;margin-left:8px;color:var(--dim);font-family:'IBM Plex Mono',monospace}
+  .badge.pub{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+  .badge.priv{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+  h1{font-size:23px;font-weight:600;margin:12px 0 4px;letter-spacing:-.02em}
+  .lede{color:var(--muted);font-size:14px}
+  .theme-btn{flex:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--muted);font-size:14px;background:var(--panel)}
+  .theme-btn:hover{color:var(--ink);border-color:var(--muted)}
+  .head-actions{display:flex;gap:8px;flex:none}
+  #overviewBtn{font-size:13px}
+  #overviewBtn .o{display:inline-block;transition:transform .15s}
+  .overview{margin-top:26px;overflow:hidden}
+  .overview.collapsed{display:none}
+
+  /* dashboard */
+  .dash{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .stat .n{font-size:22px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  @media (max-width:680px){.dash{grid-template-columns:repeat(2,1fr)}}
+
+  /* recent */
+  .recent{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:none}
+  .recent.on{display:block}
+  .recent h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+  .recent .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .rchip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px;cursor:pointer;background:var(--bg)}
+  .rchip:hover{border-color:var(--accent);color:var(--accent)}
+  .rchip .ri{font-size:13px}
+
+  .tree{margin:16px 0 0;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;position:relative}
+  .tree-bar{display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);color:var(--dim);font-size:12.5px;flex-wrap:wrap}
+  .search{display:flex;align-items:center;gap:8px;flex:1;min-width:180px}
+  .search input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:13.5px;padding:7px 12px}
+  .search input:focus{outline:none;border-color:var(--accent)}
+  .filter-btn{border:1px solid var(--line);border-radius:7px;padding:5px 11px;font-size:12.5px;color:var(--muted);background:var(--bg)}
+  .filter-btn.on{color:var(--star);border-color:color-mix(in srgb,var(--star) 50%,transparent)}
+  .bar-actions{display:flex;gap:9px}
+  .bar-btn{font-size:13px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 13px;transition:.12s;background:var(--bg)}
+  .bar-btn:hover,.bar-btn:focus-visible{color:#fff;background:var(--accent);border-color:var(--accent);outline:none}
+  html[data-theme="light"] .bar-btn:hover{color:#fff}
+  .tree-body{padding:10px 10px 16px;min-height:200px;max-height:62vh;overflow-y:auto;overflow-x:hidden}
+  .tree-body::-webkit-scrollbar{width:10px}
+  .tree-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  .tree-body::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+  .row{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:9px;min-height:42px;position:relative}
+  .row:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+  .row.tagged::before{content:"";position:absolute;left:3px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--tagc,transparent)}
+  .indent{flex:none;display:inline-block}
+  .folder-row{cursor:pointer}
+  .chev{color:var(--dim);font-size:10px;flex:none;transition:transform .15s;display:inline-block;width:12px}
+  .chev.open{transform:rotate(90deg)}
+  .ficon{flex:none;font-size:16px;width:22px;text-align:center}
+  .fold{color:var(--accent);font-weight:600;font-size:14.5px}
+  .fold-count{color:var(--dim);font-size:11.5px;flex:none;background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:1px 9px}
+  .star{flex:none;font-size:13px;color:var(--dim);cursor:pointer;width:18px;text-align:center}
+  .star.on{color:var(--star)}
+  .chk{flex:none;font-size:14px;color:var(--dim);cursor:pointer;width:18px;text-align:center}
+  .chk.on{color:var(--accent)}
+  .row.selected{background:color-mix(in srgb,var(--accent) 13%,transparent)}
+  .selbar{position:fixed;left:50%;transform:translateX(-50%) translateY(120%);bottom:24px;z-index:55;display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 16px;box-shadow:0 14px 40px rgba(0,0,0,.4);transition:transform .2s;font-size:13.5px}
+  .selbar.on{transform:translateX(-50%) translateY(0)}
+  .selbar .selspace{width:6px}
+  .selbtn{border:1px solid var(--line);border-radius:8px;padding:6px 13px;color:var(--ink);background:var(--bg);font-size:13px}
+  .selbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .selbtn.d:hover{border-color:var(--danger);color:var(--danger)}
+  .fname{color:var(--ink);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fname.clk{cursor:pointer}
+  .fname.clk:hover{color:var(--accent);text-decoration:underline}
+  .fname .ext{color:var(--ok);font-family:'IBM Plex Mono',monospace;font-size:13px}
+  .extlabel{font-size:10.5px;color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:middle;font-family:'IBM Plex Mono',monospace}
+  .link-row .fname{color:var(--accent)}
+  .size{color:var(--dim);font-size:12px;margin-left:auto;flex:none;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+
+  .menu{flex:none;position:relative}
+  .dots{color:var(--dim);font-size:18px;line-height:1;padding:2px 8px;border-radius:7px;letter-spacing:1px}
+  .menu:not(:hover) .dots{opacity:.4}
+  .row:hover .dots,.menu.show .dots{opacity:1}
+  .dots:hover,.menu.show .dots{color:var(--ink);background:var(--bg)}
+  .pop{display:none;position:absolute;right:0;top:30px;z-index:30;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px;min-width:180px;box-shadow:0 12px 34px rgba(0,0,0,.4);flex-direction:column}
+  .menu.show .pop{display:flex}
+  .pop a,.pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font-size:13px;color:var(--ink);padding:8px 11px;border-radius:7px;white-space:nowrap}
+  .pop a:hover,.pop button:hover{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+  .pop button.d:hover{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+  .pop .sep{height:1px;background:var(--line);margin:4px 2px}
+  .pop .swatches{display:flex;gap:6px;padding:7px 11px}
+  .pop .sw{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+  .pop .sw:hover{transform:scale(1.15)}
+  .pop .sw.sel{border-color:var(--ink)}
+  .collapsed{display:none}
+  .emptyline{color:var(--dim);padding:14px;font-size:14px}
+
+  .statline{display:flex;flex-wrap:wrap;gap:6px 24px;color:var(--dim);font-size:13px;padding:14px 2px 0}
+  .statline b{color:var(--muted);font-weight:500}
+  .toast{color:var(--ok)} .toast.err{color:var(--danger)}
+
+  /* drag overlay */
+  .drop{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent) 16%,rgba(8,10,14,.7));backdrop-filter:blur(2px)}
+  .drop.on{display:flex}
+  .drop .box{border:2px dashed var(--accent);border-radius:16px;padding:48px 64px;font-size:18px;color:#fff;background:rgba(14,17,22,.6);text-align:center}
+  html[data-theme="light"] .drop .box{color:var(--accent);background:rgba(255,255,255,.85)}
+
+  footer{margin-top:48px;border-top:1px solid var(--line);padding:18px 0 46px;color:var(--dim);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:'IBM Plex Mono',monospace}
+  footer button{color:var(--dim)}
+  footer button:hover{color:var(--accent)}
+
+  .overlay{position:fixed;inset:0;background:rgba(8,10,14,.74);display:none;align-items:flex-start;justify-content:center;padding:6vh 24px 24px;z-index:60}
+  html[data-theme="light"] .overlay{background:rgba(40,46,54,.4)}
+  .overlay.open{display:flex}
+  .modal{width:100%;max-width:820px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:26px 28px}
+  .modal h2{font-size:16px;font-weight:600;margin-bottom:16px}
+  .modal label{display:block;font-size:12.5px;color:var(--muted);margin:12px 0 5px}
+  .modal input[type=text],.modal input[type=password],.modal textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);font:inherit;font-size:14px;padding:10px 12px}
+  .modal textarea{min-height:320px;resize:vertical;line-height:1.7;font-family:'IBM Plex Mono',monospace;font-size:13.5px}
+  .modal input:focus,.modal textarea:focus{outline:none;border-color:var(--accent)}
+  .hintline{font-size:12px;color:var(--dim);margin-top:6px}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+  .btn{font-size:14px;border:1px solid var(--line);border-radius:8px;padding:8px 18px;color:var(--muted)}
+  .btn:hover{color:var(--ink);border-color:var(--muted)}
+  .btn.primary{color:#fff;background:var(--accent);border-color:var(--accent)}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .viewer .note-body{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:20px;white-space:pre-wrap;font-size:14px;line-height:1.8;max-height:60vh;overflow:auto;color:var(--ink);font-family:'IBM Plex Mono',monospace}
+  .viewer .note-body.md{white-space:normal;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px}
+  .note-body.md h1{font-size:21px;margin:4px 0 12px;font-weight:600}
+  .note-body.md h2{font-size:18px;margin:18px 0 8px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .note-body.md h3{font-size:16px;margin:14px 0 6px;font-weight:600}
+  .note-body.md h4,.note-body.md h5,.note-body.md h6{font-size:14px;margin:12px 0 4px;font-weight:600;color:var(--muted)}
+  .note-body.md p{margin:0 0 11px}
+  .note-body.md ul,.note-body.md ol{margin:0 0 11px 22px} .note-body.md li{margin:3px 0}
+  .note-body.md code{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-family:'IBM Plex Mono',monospace;font-size:13px}
+  .note-body.md pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:14px;overflow:auto;margin:0 0 12px}
+  .note-body.md pre code{background:none;border:0;padding:0}
+  .note-body.md blockquote{border-left:3px solid var(--accent);margin:0 0 11px;padding:4px 14px;color:var(--muted)}
+  .note-body.md a{color:var(--accent);text-decoration:underline}
+  .note-body.md hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+  .vtoggle{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:2px 9px;color:var(--muted);margin-left:8px;font-weight:400;vertical-align:middle}
+  .vtoggle:hover{color:var(--accent);border-color:var(--accent)}
+  .viewer .note-title{font-size:16px;font-weight:600;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div>
+    <div class="prompt"><b>mert@archive</b>:~$ tree ./docs <span class="badge" id="repoBadge"></span></div>
+    <h1>Document Archive</h1>
+    <p class="lede">Guides, notes and documents — searchable, taggable, all in one place.</p>
+  </div>
+  <div class="head-actions">
+    <button class="theme-btn" id="overviewBtn" title="show / hide overview">▾ overview</button>
+    <button class="theme-btn" id="themeBtn" title="toggle theme">◐</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="overview" id="overview">
+    <div class="dash">
+      <div class="stat"><div class="n" id="sFolders">–</div><div class="l">folders</div></div>
+      <div class="stat"><div class="n" id="sFiles">–</div><div class="l">files</div></div>
+      <div class="stat"><div class="n" id="sSize">–</div><div class="l">total size</div></div>
+      <div class="stat"><div class="n" id="sStars">–</div><div class="l">favourites</div></div>
+    </div>
+    <div class="recent" id="recent">
+      <h3>Recently added</h3>
+      <div class="chips" id="recentChips"></div>
+    </div>
+  </div>
+
+  <div class="tree">
+    <div class="tree-bar">
+      <span class="search"><input type="text" id="searchBox" placeholder="search files…" autocomplete="off"></span>
+      <button class="filter-btn" id="starFilter" title="show favourites only">★ favourites</button>
+      <button class="filter-btn" id="sortBtn" title="sort">↕ name</button>
+      <button class="filter-btn" id="collapseBtn" title="collapse / expand all">⊟ collapse</button>
+      <button class="filter-btn" id="zipBtn" title="download whole archive as zip">⤓ export all</button>
+      <span class="bar-actions" id="adminActions" hidden>
+        <button class="bar-btn" id="btnNewFolder">+ folder</button>
+        <button class="bar-btn" id="btnNewNote">+ note</button>
+        <button class="bar-btn" id="btnNewLink">+ link</button>
+        <button class="bar-btn" id="btnUpload">+ upload</button>
+      </span>
+    </div>
+    <div class="tree-body" id="tree"></div>
+  </div>
+  <div class="statline" id="stats"></div>
+</div>
+
+<div class="selbar" id="selbar">
+  <span id="selCount">0 selected</span>
+  <span class="selspace"></span>
+  <button class="selbtn" id="selDownload">⤓ download</button>
+  <button class="selbtn" id="selZip">🗜 zip</button>
+  <button class="selbtn d" id="selDelete" hidden>🗑 delete</button>
+  <button class="selbtn" id="selClear">✕ clear</button>
+</div>
+
+<footer class="wrap">
+  <span>© <span id="year"></span> Mert Ertuğral</span>
+  <button id="btnAdmin">admin</button>
+</footer>
+
+<div class="drop" id="drop"><div class="box">⤓ Drop files to upload</div></div>
+<div class="overlay" id="overlay"><div class="modal" id="modalBox" role="dialog" aria-modal="true"></div></div>
+<input type="file" id="filePick" hidden multiple>
+<input type="file" id="folderPick" hidden multiple webkitdirectory>
+
+<script>
+/* ============ CONFIG ============ */
+const CONFIG = {
+  user:   "ertugralmert",
+  repo:   "archive-private",
+  rootDir:"docs",
+  label:  "private"
+};
+const OWNER_NAME = "Mert Ertuğral";
+const DEMO = [
+  {path:"migration/sgk/liberty-notes.md", size:4200},
+  {path:"migration/liberty-migration-guide.pdf", size:2515000},
+  {path:"training/watsonx-data-training.pdf", size:1153000},
+  {path:"tools/depcve/depcve-scanner-manual.pdf", size:870000}
+];
+const TAG_COLORS = {none:"transparent", red:"#E06C75", amber:"#E5A663", green:"#3FB68B", blue:"#5C9CFF", purple:"#B98BE0"};
+
+/* ============ state ============ */
+const $ = id => document.getElementById(id);
+const treeEl = $("tree");
+let TOKEN=null, BRANCH="main", ITEMS=[], COLLAPSED={}, SEARCH="", STAR_ONLY=false, SORT="name";
+const SEL=new Set();
+const TKEY="archive_token_"+(CONFIG.repo||"x");
+const MKEY="archive_meta_"+(CONFIG.repo||"x");     // local tags + favourites
+let META = loadMeta();                              // { path: {star:bool, tag:"blue"} }
+
+function loadMeta(){ try{return JSON.parse(localStorage.getItem(MKEY))||{};}catch(e){return {};} }
+function saveMeta(){ try{localStorage.setItem(MKEY, JSON.stringify(META));}catch(e){} }
+
+/* ============ helpers ============ */
+const isNote = n => /\.(md|txt)$/i.test(n);
+const canView = n => /\.(pdf|png|jpe?g|gif|webp|svg|json|csv|log|xml|html?)$/i.test(n);
+const fmtSize = b => b==null?"":b<1024?b+" B":b<1048576?(b/1024).toFixed(0)+" KB":b<1073741824?(b/1048576).toFixed(1)+" MB":(b/1073741824).toFixed(2)+" GB";
+const esc = s => (s+"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const b64 = s => btoa(unescape(encodeURIComponent(s)));
+const fromB64 = s => decodeURIComponent(escape(atob((s||"").replace(/\n/g,""))));
+const api = p => `https://api.github.com/repos/${CONFIG.user}/${CONFIG.repo}${p}`;
+const rawUrl = p => `https://raw.githubusercontent.com/${CONFIG.user}/${CONFIG.repo}/${BRANCH}/${CONFIG.rootDir}/${p}`;
+const live = () => CONFIG.user && CONFIG.repo;
+const headers = () => { const h={"Accept":"application/vnd.github+json"}; if(TOKEN)h.Authorization="Bearer "+TOKEN; return h; };
+function iconFor(name,ext){ if(isNote(name))return "📝"; ext=ext.toLowerCase();
+  if(/\.pdf$/.test(ext))return "📕"; if(/\.(docx?|odt|rtf)$/.test(ext))return "📘";
+  if(/\.(xlsx?|csv|ods)$/.test(ext))return "📗"; if(/\.(pptx?|odp)$/.test(ext))return "📙";
+  if(/\.(png|jpe?g|gif|webp|svg|bmp)$/.test(ext))return "🖼"; if(/\.(zip|rar|7z|tar|gz)$/.test(ext))return "🗜";
+  if(/\.(mp4|mov|avi|mkv)$/.test(ext))return "🎞"; if(/\.(mp3|wav|flac|m4a)$/.test(ext))return "🎵"; return "📄"; }
+
+function toast(msg,err){ const real=ITEMS.filter(i=>!i.placeholder).length; $("stats").innerHTML=`<span><b>${real}</b> files</span>`+(msg?` <span class="toast${err?" err":""}">${esc(msg)}</span>`:""); }
+
+/* ============ load ============ */
+async function loadList(){
+  if(live()){
+    try{
+      const repo=await (await fetch(api(""),{headers:headers()})).json();
+      BRANCH=repo.default_branch||"main";
+      const t=await (await fetch(api(`/git/trees/${BRANCH}?recursive=1&_=${Date.now()}`),{headers:headers(),cache:"no-store"})).json();
+      ITEMS=(t.tree||[]).filter(x=>x.type==="blob"&&x.path.startsWith(CONFIG.rootDir+"/"))
+        .map(x=>({path:x.path.slice(CONFIG.rootDir.length+1), size:x.size, sha:x.sha}))
+        .filter(x=>!x.path.endsWith(".gitkeep"));
+      (t.tree||[]).filter(x=>x.type==="blob"&&x.path.endsWith("/.gitkeep")&&x.path.startsWith(CONFIG.rootDir+"/"))
+        .forEach(x=>{ const folder=x.path.slice(CONFIG.rootDir.length+1,-("/.gitkeep".length));
+          if(!ITEMS.some(it=>it.path.startsWith(folder+"/"))) ITEMS.push({path:folder+"/.keep",size:null,placeholder:true}); });
+      render(); updateDash(); pruneSel(); toast(""); return;
+    }catch(e){}
+  }
+  ITEMS=DEMO.slice(); render(); updateDash(); toast(live()?"could not reach GitHub":"demo mode — fill CONFIG", true);
+}
+
+/* ============ tree build/render ============ */
+function buildTree(){
+  const root={folders:{},files:[]}; const q=(SEARCH||"").toLowerCase();
+  ITEMS.forEach(it=>{
+    if(it.placeholder){ /* keep empty folders unless filtering */ if(q||STAR_ONLY) return; }
+    else{
+      if(q && !it.path.toLowerCase().includes(q)) return;
+      if(STAR_ONLY && !(META[it.path]&&META[it.path].star)) return;
+    }
+    const parts=it.path.split("/"); const fname=parts.pop(); let node=root;
+    parts.forEach(p=>{ node.folders[p]=node.folders[p]||{folders:{},files:[]}; node=node.folders[p]; });
+    if(!it.placeholder) node.files.push({name:fname,size:it.size,path:it.path});
+  });
+  return root;
+}
+function countFiles(node){ let n=node.files.length; for(const k in node.folders)n+=countFiles(node.folders[k]); return n; }
+
+function renderNode(node, depth, dirPath, out){
+  const folderNames=Object.keys(node.folders).sort();
+  const files=node.files.slice().sort((a,b)=>{
+    if(SORT==="size") return (b.size||0)-(a.size||0);
+    if(SORT==="type"){ const ea=(a.name.split(".").pop()||""), eb=(b.name.split(".").pop()||""); return ea.localeCompare(eb)||a.name.localeCompare(b.name); }
+    return a.name.localeCompare(b.name);
+  });
+  // folders first, then files
+  folderNames.forEach(name=>{
+    const full=dirPath?dirPath+"/"+name:name;
+    const open=SEARCH||STAR_ONLY?true:!COLLAPSED[full];
+    const child=node.folders[name];
+    out.push(`<div class="row folder-row" data-fold="${esc(full)}">
+      <span class="indent" style="width:${depth*20}px"></span>
+      <span class="chev ${open?"open":""}">▸</span>
+      <span class="ficon">${open?"📂":"📁"}</span>
+      <span class="fold">${esc(name)}</span>
+      <span class="fold-count">${countFiles(child)}</span>
+      ${TOKEN?`<span class="menu"><button class="dots" data-menu>⋯</button><span class="pop">
+        <button data-addhere="${esc(full)}">📝 new note</button>
+        <button data-linkhere="${esc(full)}">🔗 new link</button>
+        <button data-uploadhere="${esc(full)}">⤴ upload file</button>
+        <button data-newsub="${esc(full)}">📁 new subfolder</button>
+        <div class="sep"></div>
+        <button data-renamefolder="${esc(full)}">✎ rename</button>
+        <button class="d" data-delfolder="${esc(full)}">🗑 delete folder</button>
+      </span></span>`:""}
+    </div>`);
+    if(open){ renderNode(child, depth+1, full, out); }
+  });
+  files.forEach(f=>{
+    const dot=f.name.lastIndexOf("."); const base=dot>0?f.name.slice(0,dot):f.name, ext=dot>0?f.name.slice(dot):"";
+    const href=live()?rawUrl(f.path):CONFIG.rootDir+"/"+f.path;
+    const isLink=/\.link$/i.test(f.name);
+    const note=isNote(f.name), view=canView(f.name);
+    const m=META[f.path]||{}; const tag=m.tag&&m.tag!=="none"?TAG_COLORS[m.tag]:"";
+    if(isLink){
+      const nameAttrs=`data-link="${esc(f.path)}" tabindex="0" role="button"`;
+      out.push(`<div class="row file-row link-row ${tag?"tagged":""} ${SEL.has(f.path)?"selected":""}" style="${tag?`--tagc:${tag}`:""}">
+        <span class="indent" style="width:${depth*20}px"></span>
+        <span class="chk ${SEL.has(f.path)?"on":""}" data-chk="${esc(f.path)}" data-size="0" title="select">${SEL.has(f.path)?"☑":"☐"}</span>
+        <span class="star ${m.star?"on":""}" data-star="${esc(f.path)}" title="favourite">${m.star?"★":"☆"}</span>
+        <span class="ficon">🔗</span>
+        <span class="fname clk" ${nameAttrs}>${esc(base)} <span class="extlabel">external</span></span>
+        <span class="size">link</span>
+        <span class="menu"><button class="dots" data-menu>⋯</button><span class="pop">
+          <button data-link="${esc(f.path)}">↗ open link</button>
+          ${TOKEN?`<button data-editlink="${esc(f.path)}">✎ edit link</button>`:""}
+          ${TOKEN?`<button data-rename="${esc(f.path)}">✎ rename</button>`:""}
+          ${TOKEN?`<button class="d" data-del="${esc(f.path)}">🗑 delete</button>`:""}
+          <div class="sep"></div>
+          <div class="swatches" data-swatch="${esc(f.path)}">
+            ${Object.keys(TAG_COLORS).map(c=>`<span class="sw ${(m.tag||"none")===c?"sel":""}" data-color="${c}" style="background:${c==="none"?"var(--line)":TAG_COLORS[c]}" title="${c}"></span>`).join("")}
+          </div>
+        </span></span>
+      </div>`);
+      return;
+    }
+    const nameAttrs=note?`data-open="${esc(f.path)}" tabindex="0" role="button"`:view?`data-view="${esc(href)}" tabindex="0" role="button"`:"";
+    out.push(`<div class="row file-row ${tag?"tagged":""} ${SEL.has(f.path)?"selected":""}" style="${tag?`--tagc:${tag}`:""}">
+      <span class="indent" style="width:${depth*20}px"></span>
+      <span class="chk ${SEL.has(f.path)?"on":""}" data-chk="${esc(f.path)}" data-size="${f.size||0}" title="select">${SEL.has(f.path)?"☑":"☐"}</span>
+      <span class="star ${m.star?"on":""}" data-star="${esc(f.path)}" title="favourite">${m.star?"★":"☆"}</span>
+      <span class="ficon">${iconFor(f.name,ext)}</span>
+      <span class="fname ${(note||view)?"clk":""}" ${nameAttrs}>${esc(base)}<span class="ext">${esc(ext)}</span></span>
+      <span class="size">${fmtSize(f.size)}</span>
+      <span class="menu"><button class="dots" data-menu>⋯</button><span class="pop">
+        ${(note||view)?`<a href="${href}" target="_blank" rel="noopener">↗ open</a>`:""}
+        ${note?`<button data-edit="${esc(f.path)}">✎ edit</button>`:""}
+        <a href="${href}" download>↓ download</a>
+        ${live()?`<button data-copy="${esc(href)}">🔗 copy link</button>`:""}
+        ${note?`<button data-pdf="${esc(f.path)}">📄 export pdf</button>`:""}
+        ${TOKEN?`<button data-rename="${esc(f.path)}">✎ rename</button>`:""}
+        ${TOKEN?`<button class="d" data-del="${esc(f.path)}">🗑 delete</button>`:""}
+        <div class="sep"></div>
+        <div class="swatches" data-swatch="${esc(f.path)}">
+          ${Object.keys(TAG_COLORS).map(c=>`<span class="sw ${(m.tag||"none")===c?"sel":""}" data-color="${c}" style="background:${c==="none"?"var(--line)":TAG_COLORS[c]}" title="${c}"></span>`).join("")}
+        </div>
+      </span></span>
+    </div>`);
+  });
+}
+
+function render(){
+  const root=buildTree();
+  const out=[];
+  renderNode(root,0,"",out);
+  if(!out.length) out.push(`<div class="emptyline">${SEARCH||STAR_ONLY?"no matches":"empty — create your first folder"}</div>`);
+  treeEl.innerHTML=out.join("");
+}
+
+function updateDash(){
+  const real=ITEMS.filter(i=>!i.placeholder);
+  const folders=new Set();
+  real.forEach(it=>{ const p=it.path.split("/"); p.pop(); let cur=""; p.forEach(s=>{cur=cur?cur+"/"+s:s; folders.add(cur);}); });
+  ITEMS.filter(i=>i.placeholder).forEach(it=>{ const f=it.path.replace(/\/\.keep$/,""); let cur=""; f.split("/").forEach(s=>{cur=cur?cur+"/"+s:s; folders.add(cur);}); });
+  const totalBytes=real.reduce((a,b)=>a+(b.size||0),0);
+  const stars=real.filter(it=>META[it.path]&&META[it.path].star).length;
+  $("sFolders").textContent=folders.size;
+  $("sFiles").textContent=real.length;
+  $("sSize").textContent=totalBytes?fmtSize(totalBytes):"0 B";
+  $("sStars").textContent=stars;
+  // recently added (by sha presence we don't have date; approximate by tree order reversed)
+  const recent=real.slice(-6).reverse();
+  if(recent.length){
+    $("recent").classList.add("on");
+    $("recentChips").innerHTML=recent.map(it=>{
+      const name=it.path.split("/").pop(); const dot=name.lastIndexOf("."); const ext=dot>0?name.slice(dot):"";
+      return `<span class="rchip" data-rec="${esc(it.path)}"><span class="ri">${iconFor(name,ext)}</span>${esc(name)}</span>`;
+    }).join("");
+  } else $("recent").classList.remove("on");
+}
+
+/* ============ interactions ============ */
+function closeAllMenus(){ document.querySelectorAll(".menu.show").forEach(m=>m.classList.remove("show")); }
+treeEl.addEventListener("click", e=>{
+  const dots=e.target.closest("[data-menu]");
+  if(dots){ const m=dots.closest(".menu"); const was=m.classList.contains("show"); closeAllMenus(); if(!was)m.classList.add("show"); e.stopPropagation(); return; }
+  const chk=e.target.closest("[data-chk]");
+  if(chk){ const p=chk.dataset.chk; if(SEL.has(p))SEL.delete(p); else SEL.add(p); updateSelbar(); render(); e.stopPropagation(); return; }
+  const star=e.target.closest("[data-star]");
+  if(star){ const p=star.dataset.star; META[p]=META[p]||{}; META[p].star=!META[p].star; saveMeta(); render(); updateDash(); e.stopPropagation(); return; }
+  const sw=e.target.closest(".sw");
+  if(sw){ const p=sw.closest("[data-swatch]").dataset.swatch; META[p]=META[p]||{}; META[p].tag=sw.dataset.color; saveMeta(); closeAllMenus(); render(); e.stopPropagation(); return; }
+  const add=e.target.closest("[data-addhere]"); if(add){ closeAllMenus(); return newNote(add.dataset.addhere); }
+  const lkh=e.target.closest("[data-linkhere]"); if(lkh){ closeAllMenus(); return newLink(lkh.dataset.linkhere); }
+  const uph=e.target.closest("[data-uploadhere]"); if(uph){ closeAllMenus(); return uploadTo(uph.dataset.uploadhere); }
+  const ns=e.target.closest("[data-newsub]"); if(ns){ closeAllMenus(); return newFolder(ns.dataset.newsub); }
+  const ed=e.target.closest("[data-edit]"); if(ed){ closeAllMenus(); return editNote(ed.dataset.edit); }
+  const rn=e.target.closest("[data-rename]"); if(rn){ closeAllMenus(); return renameFile(rn.dataset.rename); }
+  const rnf=e.target.closest("[data-renamefolder]"); if(rnf){ closeAllMenus(); return renameFolder(rnf.dataset.renamefolder); }
+  const dlf=e.target.closest("[data-delfolder]"); if(dlf){ closeAllMenus(); return delFolder(dlf.dataset.delfolder); }
+  const cp=e.target.closest("[data-copy]"); if(cp){ closeAllMenus(); navigator.clipboard?.writeText(cp.dataset.copy).then(()=>toast("link copied ✓"),()=>toast("copy failed",true)); return; }
+  const pd=e.target.closest("[data-pdf]"); if(pd){ closeAllMenus(); return exportPdf(pd.dataset.pdf); }
+  const dl=e.target.closest("[data-del]"); if(dl){ closeAllMenus(); return delFile(dl.dataset.del); }
+  const lk=e.target.closest("[data-link]"); if(lk){ closeAllMenus(); return openLink(lk.dataset.link); }
+  const elk=e.target.closest("[data-editlink]"); if(elk){ closeAllMenus(); return newLink(null, elk.dataset.editlink); }
+  const op=e.target.closest("[data-open]"); if(op) return viewNote(op.dataset.open);
+  const vw=e.target.closest("[data-view]"); if(vw){ window.open(vw.dataset.view,"_blank","noopener"); return; }
+  const fold=e.target.closest(".folder-row");
+  if(fold && !e.target.closest(".menu")){ const f=fold.dataset.fold; COLLAPSED[f]=!COLLAPSED[f]; render(); return; }
+});
+document.addEventListener("click", e=>{ if(!e.target.closest(".menu")) closeAllMenus(); });
+treeEl.addEventListener("keydown", e=>{ if(e.key==="Enter"&&e.target.dataset){ if(e.target.dataset.open) viewNote(e.target.dataset.open); else if(e.target.dataset.view) window.open(e.target.dataset.view,"_blank","noopener"); } });
+$("searchBox").addEventListener("input", e=>{ SEARCH=e.target.value.trim(); render(); });
+$("starFilter").addEventListener("click", ()=>{ STAR_ONLY=!STAR_ONLY; $("starFilter").classList.toggle("on",STAR_ONLY); render(); });
+$("sortBtn").addEventListener("click", ()=>{ SORT = SORT==="name"?"size":SORT==="size"?"type":"name"; $("sortBtn").textContent = "↕ "+SORT; render(); });
+$("collapseBtn").addEventListener("click", ()=>{
+  const anyOpen = allFolders().some(f=>!COLLAPSED[f]);
+  if(anyOpen){ allFolders().forEach(f=>COLLAPSED[f]=true); $("collapseBtn").textContent="⊞ expand"; }
+  else { COLLAPSED={}; $("collapseBtn").textContent="⊟ collapse"; }
+  render();
+});
+$("recentChips").addEventListener("click", e=>{ const c=e.target.closest("[data-rec]"); if(!c)return; const p=c.dataset.rec; const name=p.split("/").pop(); if(isNote(name))viewNote(p); else window.open(live()?rawUrl(p):CONFIG.rootDir+"/"+p,"_blank","noopener"); });
+
+/* ============ theme ============ */
+function applyTheme(t){ document.documentElement.setAttribute("data-theme",t); $("themeBtn").textContent=t==="light"?"☀":"◐"; try{localStorage.setItem("archive_theme",t);}catch(e){} }
+$("themeBtn").onclick=()=>applyTheme(document.documentElement.getAttribute("data-theme")==="light"?"dark":"light");
+
+function applyOverview(open){ $("overview").classList.toggle("collapsed",!open); $("overviewBtn").innerHTML=(open?"▾":"▸")+" overview"; try{localStorage.setItem("archive_overview",open?"1":"0");}catch(e){} }
+$("overviewBtn").onclick=()=>applyOverview($("overview").classList.contains("collapsed"));
+
+/* ============ modal ============ */
+function openModal(h){ $("modalBox").innerHTML=h; $("overlay").classList.add("open"); }
+function closeModal(){ $("overlay").classList.remove("open"); }
+$("overlay").addEventListener("click",e=>{ if(e.target===$("overlay")) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeModal(); closeAllMenus(); } });
+function allFolders(){ const s=new Set(); ITEMS.forEach(it=>{ const p=it.path.replace(/\/\.keep$/,"").split("/"); if(!it.placeholder)p.pop(); let cur=""; p.forEach(x=>{cur=cur?cur+"/"+x:x; s.add(cur);}); }); return [...s].sort(); }
+
+/* ============ notes ============ */
+async function fetchNote(path){ const r=await fetch(live()?rawUrl(path):CONFIG.rootDir+"/"+path); if(!r.ok)throw 0; return r.text(); }
+
+/* tiny, safe markdown → html (escapes first, then formats) */
+function mdToHtml(src){
+  let s = esc(src);
+  // code fences
+  const blocks=[]; s=s.replace(/```([\s\S]*?)```/g,(m,c)=>{blocks.push(c);return `\u0000${blocks.length-1}\u0000`;});
+  // headings
+  s=s.replace(/^###### (.*)$/gm,"<h6>$1</h6>").replace(/^##### (.*)$/gm,"<h5>$1</h5>")
+     .replace(/^#### (.*)$/gm,"<h4>$1</h4>").replace(/^### (.*)$/gm,"<h3>$1</h3>")
+     .replace(/^## (.*)$/gm,"<h2>$1</h2>").replace(/^# (.*)$/gm,"<h1>$1</h1>");
+  // hr
+  s=s.replace(/^\s*([-*_])\1\1+\s*$/gm,"<hr>");
+  // blockquote
+  s=s.replace(/^&gt; (.*)$/gm,"<blockquote>$1</blockquote>");
+  // lists
+  s=s.replace(/(?:^|\n)((?:\s*[-*+] .*(?:\n|$))+)/g,(m,l)=>{const items=l.trim().split(/\n/).map(x=>x.replace(/^\s*[-*+] /,"")).map(x=>`<li>${x}</li>`).join("");return `\n<ul>${items}</ul>`;});
+  s=s.replace(/(?:^|\n)((?:\s*\d+\. .*(?:\n|$))+)/g,(m,l)=>{const items=l.trim().split(/\n/).map(x=>x.replace(/^\s*\d+\. /,"")).map(x=>`<li>${x}</li>`).join("");return `\n<ol>${items}</ol>`;});
+  // inline: bold, italic, code, links
+  s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>")
+     .replace(/`([^`]+)`/g,"<code>$1</code>")
+     .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // paragraphs (lines that aren't already block elements)
+  s=s.split(/\n{2,}/).map(p=>{p=p.trim(); if(!p)return ""; if(/^<(h\d|ul|ol|hr|blockquote|pre)/.test(p))return p; return `<p>${p.replace(/\n/g,"<br>")}</p>`;}).join("\n");
+  // restore code blocks
+  s=s.replace(/\u0000(\d+)\u0000/g,(m,i)=>`<pre><code>${blocks[+i]}</code></pre>`);
+  return s;
+}
+
+async function viewNote(path){
+  try{ const text=await fetchNote(path); const title=path.split("/").pop().replace(/\.(md|txt)$/i,"");
+    const isMd=/\.md$/i.test(path);
+    openModal(`<div class="viewer"><div class="note-title">${esc(title)} ${isMd?`<button class="vtoggle" id="vToggle" title="toggle raw / formatted">⟳ raw</button>`:""}</div>
+      <div class="note-body ${isMd?"md":""}" id="noteBody">${isMd?mdToHtml(text):esc(text)}</div>
+      <div class="modal-actions"><button class="btn" id="mClose">close</button>
+      ${TOKEN?`<button class="btn" id="vEdit">edit</button>`:""}
+      <button class="btn primary" id="vPdf">export pdf ↓</button></div></div>`);
+    $("mClose").onclick=closeModal; $("vPdf").onclick=()=>exportPdf(path); if(TOKEN&&$("vEdit"))$("vEdit").onclick=()=>editNote(path);
+    if(isMd&&$("vToggle")){ let raw=false; $("vToggle").onclick=()=>{ raw=!raw; $("noteBody").classList.toggle("md",!raw); $("noteBody").innerHTML=raw?esc(text):mdToHtml(text); $("vToggle").textContent=raw?"⟳ formatted":"⟳ raw"; }; }
+  }catch(e){ toast("could not open note",true); }
+}
+async function exportPdf(path){
+  let text=""; try{ text=await fetchNote(path); }catch(e){ return toast("could not load note",true); }
+  const title=path.split("/").pop().replace(/\.(md|txt)$/i,"").replace(/[-_]/g," ");
+  const date=new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
+  const w=window.open("","_blank"); if(!w) return toast("allow popups to export pdf",true);
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+    @page{margin:24mm 20mm} body{font-family:Georgia,serif;color:#1B1F24;line-height:1.7;font-size:12.5pt;margin:0}
+    .head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1B1F24;padding-bottom:8px;margin-bottom:28px;font-family:Arial,sans-serif}
+    .who{font-size:13pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase} .what{font-size:9pt;color:#5B6470;letter-spacing:.08em}
+    h1{font-family:Arial,sans-serif;font-size:17pt;margin:0 0 4px;text-transform:capitalize}
+    .date{font-family:Arial,sans-serif;font-size:9.5pt;color:#5B6470;margin-bottom:26px} pre{white-space:pre-wrap;font:inherit;margin:0}
+    .foot{margin-top:40px;padding-top:8px;border-top:1px solid #C8CCD2;font-family:Arial,sans-serif;font-size:8.5pt;color:#5B6470;display:flex;justify-content:space-between}
+  </style></head><body><div class="head"><span class="who">${esc(OWNER_NAME)}</span><span class="what">DOCUMENT ARCHIVE</span></div>
+  <h1>${esc(title)}</h1><div class="date">${date}</div><pre>${esc(text)}</pre>
+  <div class="foot"><span>${esc(OWNER_NAME)}</span><span>${date}</span></div></body></html>`);
+  w.document.close(); w.onload=()=>w.print(); setTimeout(()=>{try{w.print()}catch(e){}},600);
+}
+
+/* ============ admin writes ============ */
+async function getRaw(path){ const r=await fetch(api(`/contents/${CONFIG.rootDir}/${path}?_=${Date.now()}`),{headers:headers(),cache:"no-store"}); if(!r.ok)throw 0; return r.json(); }
+async function freshSha(path){ try{ const j=await getRaw(path); return j.sha; }catch(e){ return null; } }
+async function putFile(path,b64content,msg){ return fetch(api(`/contents/${CONFIG.rootDir}/${path}`),{method:"PUT",headers:headers(),body:JSON.stringify({message:msg,content:b64content,branch:BRANCH})}); }
+
+function newFolder(preParent){
+  const folders=allFolders();
+  openModal(`<h2>New folder</h2>
+    <label>Path (use / to nest)</label>
+    <input type="text" id="fPath" list="fl" value="${esc(preParent?preParent+"/":"")}" placeholder="migration/sgk">
+    <datalist id="fl">${folders.map(f=>`<option value="${esc(f)}">`).join("")}</datalist>
+    <div class="hintline">Empty folders keep a hidden .gitkeep placeholder.</div>
+    <div class="modal-actions"><button class="btn" id="mCancel">cancel</button><button class="btn primary" id="mOk">create</button></div>`);
+  $("mCancel").onclick=closeModal;
+  $("mOk").onclick=async()=>{ const p=$("fPath").value.trim().replace(/^\/+|\/+$/g,""); if(!p)return;
+    const r=await putFile(`${p}/.gitkeep`,b64(""),`folder: ${p}`); if(!r.ok)return toast("create failed",true);
+    closeModal(); await loadList(); toast("folder created ✓"); };
+}
+$("btnNewFolder").onclick=()=>newFolder();
+
+function newNote(preFolder){
+  const folders=allFolders();
+  openModal(`<h2>New note</h2>
+    <label>Folder</label><input type="text" id="nFolder" list="fl" value="${esc(preFolder||folders[0]||"notes")}">
+    <datalist id="fl">${folders.map(f=>`<option value="${esc(f)}">`).join("")}</datalist>
+    <label>Title</label><input type="text" id="nTitle" placeholder="liberty classloader findings">
+    <label>Note</label><textarea id="nBody" placeholder="Write here…"></textarea>
+    <div class="modal-actions"><button class="btn" id="mCancel">cancel</button><button class="btn primary" id="mSave">save</button></div>`);
+  $("mCancel").onclick=closeModal;
+  $("mSave").onclick=async()=>{ const folder=$("nFolder").value.trim().replace(/^\/+|\/+$/g,""); const title=$("nTitle").value.trim(); const body=$("nBody").value;
+    if(!folder||!title)return; const slug=title.toLowerCase().replace(/[^a-z0-9çğıöşü\s-]/gi,"").trim().replace(/\s+/g,"-");
+    const r=await putFile(`${folder}/${slug}.md`,b64(body),`note: ${title}`); if(!r.ok)return toast("save failed",true);
+    closeModal(); await loadList(); toast("saved ✓"); };
+}
+$("btnNewNote").onclick=()=>newNote();
+
+/* external link entries stored as <name>.link containing JSON {url,desc} */
+async function openLink(path){
+  try{ const raw=await fetchNote(path); let url="",desc=""; try{const j=JSON.parse(raw);url=j.url;desc=j.desc||"";}catch(e){url=raw.trim();}
+    if(!/^https?:\/\//i.test(url)) url="https://"+url;
+    window.open(url,"_blank","noopener");
+  }catch(e){ toast("could not open link",true); }
+}
+async function newLink(preFolder, editPath){
+  const folders=allFolders(); let cur={title:"",url:"",desc:"",folder:preFolder||folders[0]||"links"};
+  if(editPath){ try{ const raw=await fetchNote(editPath); const j=JSON.parse(raw); cur.url=j.url||""; cur.desc=j.desc||""; cur.title=editPath.split("/").pop().replace(/\.link$/i,""); cur.folder=editPath.slice(0,editPath.lastIndexOf("/"))||"links"; }catch(e){} }
+  openModal(`<h2>${editPath?"Edit link":"New external link"}</h2>
+    <label>Folder</label><input type="text" id="lFolder" list="fl" value="${esc(cur.folder)}" ${editPath?"disabled":""}>
+    <datalist id="fl">${folders.map(f=>`<option value="${esc(f)}">`).join("")}</datalist>
+    <label>Title</label><input type="text" id="lTitle" value="${esc(cur.title)}" placeholder="SGK backup 2026 (Box)" ${editPath?"disabled":""}>
+    <label>URL (Box, Drive, anything)</label><input type="text" id="lUrl" value="${esc(cur.url)}" placeholder="https://ibm.box.com/s/...">
+    <label>Description (optional)</label><input type="text" id="lDesc" value="${esc(cur.desc)}" placeholder="what this points to">
+    <div class="hintline">Stored as a small .link entry in the repo. Nothing is uploaded — just a pointer.</div>
+    <div class="modal-actions"><button class="btn" id="mCancel">cancel</button><button class="btn primary" id="mSave">save</button></div>`);
+  $("mCancel").onclick=closeModal;
+  $("mSave").onclick=async()=>{
+    const folder=(editPath?cur.folder:$("lFolder").value).trim().replace(/^\/+|\/+$/g,"");
+    const title=(editPath?cur.title:$("lTitle").value).trim();
+    const url=$("lUrl").value.trim(); const desc=$("lDesc").value.trim();
+    if(!folder||!title||!url)return;
+    const slug=title.toLowerCase().replace(/[^a-z0-9çğıöşü\s-]/gi,"").trim().replace(/\s+/g,"-");
+    const path=`${folder}/${slug}.link`;
+    const payload=b64(JSON.stringify({url,desc},null,2));
+    let r;
+    if(editPath){ const data=await getRaw(editPath).catch(()=>null);
+      r=await fetch(api(`/contents/${CONFIG.rootDir}/${editPath}`),{method:"PUT",headers:headers(),body:JSON.stringify({message:`edit link: ${title}`,content:payload,sha:data&&data.sha,branch:BRANCH})});
+    } else r=await putFile(path,payload,`link: ${title}`);
+    if(!r.ok)return toast("save failed",true);
+    closeModal(); await loadList(); toast("link saved ✓");
+  };
+}
+$("btnNewLink").onclick=()=>newLink();
+
+let UPLOAD_FOLDER="files";
+function uploadTo(preFolder){
+  const folders=allFolders();
+  openModal(`<h2>Upload</h2>
+    <label>Target folder</label><input type="text" id="uFolder" list="fl" value="${esc(preFolder||folders[0]||"files")}">
+    <datalist id="fl">${folders.map(f=>`<option value="${esc(f)}">`).join("")}</datalist>
+    <div class="hintline">Max ~25 MB per file. Drag &amp; drop also works anywhere on the page. ZIPs can be extracted with their folder structure.</div>
+    <div class="modal-actions" style="flex-wrap:wrap">
+      <button class="btn" id="mCancel">cancel</button>
+      <button class="btn" id="mPickFolder">📁 choose folder…</button>
+      <button class="btn primary" id="mPick">📄 choose file(s)…</button>
+    </div>`);
+  $("mCancel").onclick=closeModal;
+  $("mPick").onclick=()=>{ UPLOAD_FOLDER=$("uFolder").value.trim().replace(/^\/+|\/+$/g,"")||"files"; $("filePick").click(); };
+  $("mPickFolder").onclick=()=>{ UPLOAD_FOLDER=$("uFolder").value.trim().replace(/^\/+|\/+$/g,"")||"files"; $("folderPick").click(); };
+}
+$("btnUpload").onclick=()=>uploadTo();
+
+/* upload a whole local folder, preserving its subfolder structure */
+async function uploadLocalFolder(fileList, baseFolder){
+  baseFolder=(baseFolder||"").replace(/^\/+|\/+$/g,""); let done=0; const files=[...fileList];
+  for(const file of files){
+    const rel=file.webkitRelativePath||file.name;
+    if(rel.includes("__MACOSX")||rel.split("/").pop().startsWith(".")) continue;
+    if(file.size>25*1024*1024){ toast(`${rel} too big (>25MB)`,true); continue; }
+    const content=await new Promise(res=>{ const rd=new FileReader(); rd.onload=()=>res(rd.result.split(",")[1]); rd.readAsDataURL(file); });
+    const path=(baseFolder?baseFolder+"/":"")+rel;
+    const r=await putFile(path,content,`upload: ${rel}`); if(r.ok)done++;
+    toast(`uploading folder… ${done}/${files.length}`);
+  }
+  closeModal(); await loadList(); toast(`uploaded ${done} file(s) ✓`);
+}
+
+async function uploadFiles(fileList, folder){
+  folder=(folder||"files").replace(/^\/+|\/+$/g,""); let done=0;
+  for(const file of fileList){
+    // a .zip can be extracted into the folder structure, or kept as a single file
+    if(/\.zip$/i.test(file.name)){
+      const extract=confirm(`"${file.name}" is a ZIP.\n\nOK = extract its contents into "${folder||"root"}" (keeps folder structure)\nCancel = upload the .zip as a single file`);
+      if(extract){ await uploadZipExtracted(file, folder); continue; }
+    }
+    if(file.size>25*1024*1024){ toast(`${file.name} too big (>25MB)`,true); continue; }
+    const content=await new Promise(res=>{ const rd=new FileReader(); rd.onload=()=>res(rd.result.split(",")[1]); rd.readAsDataURL(file); });
+    const r=await putFile(`${folder}/${file.name}`,content,`upload: ${file.name}`); if(r.ok)done++;
+    toast(`uploading… ${done}/${fileList.length}`);
+  }
+  if(done){ closeModal(); await loadList(); toast(`uploaded ${done} file(s) ✓`); }
+}
+$("filePick").addEventListener("change", async e=>{ const files=[...e.target.files]; e.target.value=""; if(files.length) await uploadFiles(files, UPLOAD_FOLDER); });
+$("folderPick").addEventListener("change", async e=>{ const files=[...e.target.files]; e.target.value=""; if(files.length) await uploadLocalFolder(files, UPLOAD_FOLDER); });
+
+async function editNote(path){
+  let data; try{ data=await getRaw(path); }catch(e){ return toast("could not load note",true); }
+  const text=fromB64(data.content); const title=path.split("/").pop().replace(/\.(md|txt)$/i,"");
+  openModal(`<h2>Edit note</h2><label>${esc(path)}</label><textarea id="eBody">${esc(text)}</textarea>
+    <div class="modal-actions"><button class="btn" id="mCancel">cancel</button><button class="btn primary" id="mSave">save changes</button></div>`);
+  $("mCancel").onclick=closeModal;
+  $("mSave").onclick=async()=>{ const body=$("eBody").value;
+    const r=await fetch(api(`/contents/${CONFIG.rootDir}/${path}`),{method:"PUT",headers:headers(),body:JSON.stringify({message:`edit: ${title}`,content:b64(body),sha:data.sha,branch:BRANCH})});
+    if(!r.ok)return toast("save failed",true); closeModal(); await loadList(); toast("updated ✓"); };
+}
+async function renameFile(path){
+  const cur=path.split("/").pop(); const nn=prompt("New file name (keep extension):",cur); if(!nn||nn===cur)return;
+  const dir=path.includes("/")?path.slice(0,path.lastIndexOf("/")+1):""; const np=dir+nn.trim();
+  try{ const data=await getRaw(path);
+    const put=await putFile(np,data.content.replace(/\n/g,""),`rename: ${path} → ${np}`); if(!put.ok)throw 0;
+    await fetch(api(`/contents/${CONFIG.rootDir}/${path}`),{method:"DELETE",headers:headers(),body:JSON.stringify({message:`rename cleanup`,sha:data.sha,branch:BRANCH})});
+    if(META[path]){ META[np]=META[path]; delete META[path]; saveMeta(); }
+    await loadList(); toast("renamed ✓");
+  }catch(e){ toast("rename failed",true); }
+}
+async function renameFolder(folder){
+  const segs=folder.split("/"); const nl=prompt(`Rename folder "${segs[segs.length-1]}" to:`,segs[segs.length-1]); if(!nl||nl===segs[segs.length-1])return;
+  segs[segs.length-1]=nl.trim(); const nf=segs.join("/");
+  const affected=ITEMS.filter(it=>it.path===folder+"/.keep"||it.path.startsWith(folder+"/")); toast("renaming folder…");
+  try{ for(const it of affected){ const oldRel=it.placeholder?folder+"/.gitkeep":it.path; const newRel=oldRel.replace(folder+"/",nf+"/");
+      const data=await getRaw(oldRel); await putFile(newRel,data.content.replace(/\n/g,""),`move: ${oldRel}`);
+      await fetch(api(`/contents/${CONFIG.rootDir}/${oldRel}`),{method:"DELETE",headers:headers(),body:JSON.stringify({message:`move cleanup`,sha:data.sha,branch:BRANCH})});
+      if(!it.placeholder&&META[it.path]){ META[newRel]=META[it.path]; delete META[it.path]; } }
+    saveMeta(); await loadList(); toast("folder renamed ✓");
+  }catch(e){ await loadList(); toast("rename partially failed",true); }
+}
+async function delFile(path){
+  if(!confirm(`Delete "${path}"?`))return; const sha=await freshSha(path); if(!sha)return toast("delete failed",true);
+  const r=await fetch(api(`/contents/${CONFIG.rootDir}/${path}`),{method:"DELETE",headers:headers(),body:JSON.stringify({message:`delete: ${path}`,sha,branch:BRANCH})});
+  if(!r.ok)return toast("delete failed",true); if(META[path]){delete META[path];saveMeta();} await loadList(); toast("deleted ✓");
+}
+async function delFolder(folder){
+  const affected=ITEMS.filter(it=>it.path===folder+"/.keep"||it.path.startsWith(folder+"/"));
+  const realCount=affected.filter(it=>!it.placeholder).length;
+  if(!confirm(`Delete folder "${folder}" and its ${realCount} file(s)?`))return; toast("deleting folder…");
+  try{ for(const it of affected){ const rel=it.placeholder?folder+"/.gitkeep":it.path; const sha=await freshSha(rel);
+      if(sha) await fetch(api(`/contents/${CONFIG.rootDir}/${rel}`),{method:"DELETE",headers:headers(),body:JSON.stringify({message:`delete: ${rel}`,sha,branch:BRANCH})});
+      if(!it.placeholder&&META[it.path]){delete META[it.path];} }
+    saveMeta(); await loadList(); toast("folder deleted ✓");
+  }catch(e){ await loadList(); toast("delete partially failed",true); }
+}
+
+/* ============ admin token ============ */
+$("btnAdmin").onclick=()=>{
+  if(TOKEN){ TOKEN=null; try{localStorage.removeItem(TKEY)}catch(e){} $("adminActions").hidden=true; render(); updateDash(); toast("admin off"); return; }
+  openModal(`<h2>Admin access · ${CONFIG.label}</h2>
+    <label>GitHub token — Contents: Read &amp; write on this repo</label>
+    <input type="password" id="tok" autocomplete="off">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer"><input type="checkbox" id="remember" checked style="width:auto"> keep me signed in on this device</label>
+    <div class="hintline">Saved only in this browser. Uncheck on shared computers.</div>
+    <div class="modal-actions"><button class="btn" id="mCancel">cancel</button><button class="btn primary" id="mOk">unlock</button></div>`);
+  $("mCancel").onclick=closeModal;
+  $("mOk").onclick=async()=>{ const t=$("tok").value.trim(); if(!t)return; TOKEN=t;
+    const r=await fetch(api(""),{headers:headers()}); if(!r.ok){TOKEN=null; return toast("token rejected",true);}
+    try{ if($("remember").checked)localStorage.setItem(TKEY,t); else localStorage.removeItem(TKEY);}catch(e){}
+    closeModal(); $("adminActions").hidden=false; render(); updateDash(); toast("admin on"); };
+  $("tok").focus();
+};
+
+/* ============ drag & drop ============ */
+let dragDepth=0;
+window.addEventListener("dragenter", e=>{ if(!TOKEN)return; e.preventDefault(); dragDepth++; $("drop").classList.add("on"); });
+window.addEventListener("dragover", e=>{ if(!TOKEN)return; e.preventDefault(); });
+window.addEventListener("dragleave", e=>{ if(!TOKEN)return; dragDepth--; if(dragDepth<=0){dragDepth=0;$("drop").classList.remove("on");} });
+window.addEventListener("drop", async e=>{ if(!TOKEN)return; e.preventDefault(); dragDepth=0; $("drop").classList.remove("on");
+  const files=[...(e.dataTransfer.files||[])]; if(!files.length)return;
+  const folder=prompt("Upload to which folder?", allFolders()[0]||"files"); if(folder===null)return;
+  await uploadFiles(files, folder.trim());
+});
+
+/* ============ selection + bulk + zip ============ */
+function updateSelbar(){
+  const n=SEL.size; $("selCount").textContent=`${n} selected`;
+  $("selbar").classList.toggle("on", n>0);
+  $("selDelete").hidden = !TOKEN;
+}
+function pruneSel(){ const live=new Set(ITEMS.filter(i=>!i.placeholder).map(i=>i.path)); [...SEL].forEach(p=>{ if(!live.has(p))SEL.delete(p); }); updateSelbar(); }
+$("selClear").onclick=()=>{ SEL.clear(); updateSelbar(); render(); };
+$("selDownload").onclick=async()=>{ for(const p of SEL){ const href=live()?rawUrl(p):CONFIG.rootDir+"/"+p; const a=document.createElement("a"); a.href=href; a.download=p.split("/").pop(); document.body.appendChild(a); a.click(); a.remove(); await new Promise(r=>setTimeout(r,300)); } };
+$("selZip").onclick=()=>zipPaths([...SEL], "selection.zip");
+$("selDelete").onclick=async()=>{ if(!TOKEN)return; if(!confirm(`Delete ${SEL.size} selected file(s)?`))return;
+  toast("deleting…"); const paths=[...SEL];
+  for(const p of paths){ const sha=await freshSha(p); if(sha){ await fetch(api(`/contents/${CONFIG.rootDir}/${p}`),{method:"DELETE",headers:headers(),body:JSON.stringify({message:`delete: ${p}`,sha,branch:BRANCH})}); if(META[p])delete META[p]; } }
+  saveMeta(); SEL.clear(); updateSelbar(); await loadList(); toast("deleted ✓");
+};
+$("zipBtn").onclick=()=>{ const all=ITEMS.filter(i=>!i.placeholder).map(i=>i.path); if(!all.length)return toast("nothing to export",true); zipPaths(all, "archive.zip"); };
+
+/* minimal store-only ZIP (no external libs) */
+const CRC_TABLE=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(bytes){let c=0xFFFFFFFF;for(let i=0;i<bytes.length;i++)c=CRC_TABLE[(c^bytes[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+async function zipPaths(paths, zipName){
+  toast(`zipping ${paths.length} file(s)…`);
+  const enc=new TextEncoder(); const files=[];
+  for(const p of paths){
+    try{ const href=live()?rawUrl(p):CONFIG.rootDir+"/"+p; const buf=new Uint8Array(await (await fetch(href,{cache:"no-store"})).arrayBuffer()); files.push({name:p,data:buf}); }
+    catch(e){ /* skip unreachable */ }
+  }
+  if(!files.length)return toast("zip failed",true);
+  const chunks=[]; const central=[]; let offset=0;
+  for(const f of files){
+    const nameBytes=enc.encode(f.name); const crc=crc32(f.data); const size=f.data.length;
+    const local=new Uint8Array(30+nameBytes.length);
+    const dv=new DataView(local.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true); dv.setUint16(6,0,true); dv.setUint16(8,0,true);
+    dv.setUint16(10,0,true); dv.setUint16(12,0,true); dv.setUint32(14,crc,true); dv.setUint32(18,size,true); dv.setUint32(22,size,true);
+    dv.setUint16(26,nameBytes.length,true); dv.setUint16(28,0,true); local.set(nameBytes,30);
+    chunks.push(local, f.data);
+    const cen=new Uint8Array(46+nameBytes.length); const cv=new DataView(cen.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true); cv.setUint16(8,0,true); cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true); cv.setUint16(14,0,true); cv.setUint32(16,crc,true); cv.setUint32(20,size,true); cv.setUint32(24,size,true);
+    cv.setUint16(28,nameBytes.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true); cv.setUint16(34,0,true); cv.setUint16(36,0,true);
+    cv.setUint32(38,0,true); cv.setUint32(42,offset,true); cen.set(nameBytes,46);
+    central.push(cen); offset+=local.length+f.data.length;
+  }
+  let cenSize=0; central.forEach(c=>cenSize+=c.length);
+  const end=new Uint8Array(22); const ev=new DataView(end.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cenSize,true); ev.setUint32(16,offset,true);
+  const blob=new Blob([...chunks,...central,end],{type:"application/zip"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=zipName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast(`exported ${files.length} file(s) ✓`);
+}
+
+/* ============ unzip (read a .zip, extract entries) ============ */
+async function unzipFile(file){
+  const buf=new Uint8Array(await file.arrayBuffer());
+  const dv=new DataView(buf.buffer);
+  // find End Of Central Directory (scan backwards)
+  let eocd=-1;
+  for(let i=buf.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+  if(eocd<0) throw new Error("not a valid zip");
+  const count=dv.getUint16(eocd+10,true);
+  let p=dv.getUint32(eocd+16,true);
+  const out=[];
+  for(let n=0;n<count;n++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const method=dv.getUint16(p+10,true);
+    const compSize=dv.getUint32(p+20,true);
+    const nameLen=dv.getUint16(p+28,true);
+    const extraLen=dv.getUint16(p+30,true);
+    const commentLen=dv.getUint16(p+32,true);
+    const lho=dv.getUint32(p+42,true);
+    const name=new TextDecoder().decode(buf.slice(p+46,p+46+nameLen));
+    p+=46+nameLen+extraLen+commentLen;
+    if(name.endsWith("/")) continue;                 // skip directory entries
+    if(name.includes("__MACOSX")||name.split("/").pop().startsWith(".")) continue;
+    // read local header to find data start
+    const lNameLen=dv.getUint16(lho+26,true);
+    const lExtraLen=dv.getUint16(lho+28,true);
+    const dataStart=lho+30+lNameLen+lExtraLen;
+    const comp=buf.slice(dataStart,dataStart+compSize);
+    let data;
+    if(method===0){ data=comp; }                     // stored
+    else if(method===8){                             // deflate
+      const ds=new DecompressionStream("deflate-raw");
+      const stream=new Blob([comp]).stream().pipeThrough(ds);
+      data=new Uint8Array(await new Response(stream).arrayBuffer());
+    } else continue;
+    out.push({name, data});
+  }
+  return out;
+}
+
+async function uploadZipExtracted(file, baseFolder){
+  let entries;
+  try{ entries=await unzipFile(file); }catch(e){ return toast("could not read zip",true); }
+  if(!entries.length) return toast("zip is empty",true);
+  baseFolder=(baseFolder||"").replace(/^\/+|\/+$/g,"");
+  let done=0;
+  for(const ent of entries){
+    if(ent.data.length>25*1024*1024){ toast(`${ent.name} too big (>25MB)`,true); continue; }
+    let b=""; const chunk=0x8000;
+    for(let i=0;i<ent.data.length;i+=chunk) b+=String.fromCharCode.apply(null, ent.data.subarray(i,i+chunk));
+    const content=btoa(b);
+    const path=(baseFolder?baseFolder+"/":"")+ent.name;
+    const r=await putFile(path,content,`extract: ${ent.name}`); if(r.ok)done++;
+    toast(`extracting… ${done}/${entries.length}`);
+  }
+  closeModal(); await loadList(); toast(`extracted ${done} file(s) from zip ✓`);
+}
+
+/* ============ init ============ */
+(async function init(){
+  applyTheme((()=>{try{return localStorage.getItem("archive_theme")}catch(e){return null}})()|| (matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"));
+  applyOverview((()=>{try{return localStorage.getItem("archive_overview")==="1"}catch(e){return false}})());
+  const b=$("repoBadge"); b.textContent=CONFIG.label||""; b.className="badge "+(CONFIG.label==="private"?"priv":"pub");
+  $("year").textContent=new Date().getFullYear();
+  try{ const saved=localStorage.getItem(TKEY); if(saved&&live()){ TOKEN=saved; const r=await fetch(api(""),{headers:headers()}); if(r.ok)$("adminActions").hidden=false; else {TOKEN=null;localStorage.removeItem(TKEY);} } }catch(e){}
+  loadList();
+})();
+</script>
+</body>
+</html>
