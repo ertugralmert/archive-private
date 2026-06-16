@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════════════
+  AMA LIVE CONSOLE — İMAJ (ama-portal akışıyla aynı)
+═══════════════════════════════════════════════════════════════════════
+
+Senin ama-portal'da yaptığın akışın aynısı: Mac'te podman build → OCP.
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  ADIM 1 — Offline veriyi hazırla (imaja gömülecek)                  ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+  cd backend
+  python3 offline.py prepare /Users/mertugral/Desktop/SGK-ama-portal/bulkExport_AMA_sha1_1_1779448965556.zip
+  cd ..
+
+  → backend/bulk_detail.json + backend/drill_index.json üretilir
+  → bunlar imaja gömülecek (Workbench çalışsın diye)
+  (Bu adımı zaten yaptın, dosyalar duruyorsa atla.)
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  ADIM 2 — İmajı build et (Mac → OCP için amd64!)                    ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+  podman build --platform linux/amd64 -t ama-live-console:v1.0 -f Containerfile .
+
+  (Yerel Mac testi için --platform olmadan da build edebilirsin.)
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  ADIM 3 — OCP'ye push (ama-portal'da nasıl yaptıysan aynısı)        ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+  # OCP'ye login (zaten login'sin):
+  oc whoami
+
+  # İç registry'ye login:
+  podman login -u $(oc whoami) -p $(oc whoami -t) \
+    default-route-openshift-image-registry.apps.ocpdev.sgk.intra --tls-verify=false
+
+  # Tag + push:
+  podman tag ama-live-console:v1.0 \
+    default-route-openshift-image-registry.apps.ocpdev.sgk.intra/ama-portal/ama-live-console:v1.0
+
+  podman push --tls-verify=false \
+    default-route-openshift-image-registry.apps.ocpdev.sgk.intra/ama-portal/ama-live-console:v1.0
+
+  ⚠ ama-portal'da kullandığın registry adresi/komut neyse onu kullan —
+    yukarıdaki SGK'nın tipik adresi, sende farklıysa kendi komutunu uygula.
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  ADIM 4 — Deploy                                                      ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+  # yaml'daki image satırını push ettiğin tam adrese güncelle, sonra:
+  oc apply -f openshift-deploy.yaml
+
+  # Route'u al:
+  oc get route ama-live-console
+  → https://ama-live-console-ama-portal.apps.ocpdev.sgk.intra
+
+  Bu URL SGK iç ağında açılır (localhost derdi YOK, firewall'a takılmaz).
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  OFFLINE / CANLI                                                      ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+  Varsayılan: OFFLINE (veri imaja gömülü, Workbench dolu).
+
+  CANLI'ya çevirmek için openshift-deploy.yaml'da:
+    - AMA_OFFLINE satırını sil
+    - AMA_SERVER satırını aç (uncomment)
+    - oc apply -f openshift-deploy.yaml  (tekrar)
+  → Token UI'da girilir.
+
+═══════════════════════════════════════════════════════════════════════
+  Designed & developed by Mert Ertuğral · IBM Expert Labs
+═══════════════════════════════════════════════════════════════════════
