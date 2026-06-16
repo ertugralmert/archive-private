@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAX-RPC → JAX-WS · Migration Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #faf8f3;
+    --bg-tint: #f3efe5;
+    --paper: #ffffff;
+    --ink: #1a1a17;
+    --ink-2: #4a4a45;
+    --ink-3: #8a8a82;
+    --rule: #d8d2c2;
+    --rule-soft: #ebe6d8;
+    --accent: #b8451f;
+    --accent-soft: #f5e3d8;
+    --gold: #8a6d2e;
+    --gold-soft: #f0e7cb;
+    --teal: #2a5d62;
+    --teal-soft: #d8e9eb;
+    --danger: #8b1a1a;
+    --danger-soft: #f5dada;
+    --code-bg: #1d1c1a;
+    --code-ink: #e8e3d4;
+    --code-comment: #8a8478;
+    --code-keyword: #d4a85a;
+    --code-string: #a8c8a3;
+    --code-tag: #c98668;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter Tight', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 15px;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(184,69,31,0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(42,93,98,0.03) 0%, transparent 40%);
+    min-height: 100vh;
+  }
+
+  /* ===== MASTHEAD ===== */
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 56px 64px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .masthead::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--gold) 50%, var(--teal) 100%);
+  }
+  .masthead-inner { max-width: 1280px; margin: 0 auto; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+    font-weight: 600;
+  }
+  .eyebrow .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin: 0 10px 2px; vertical-align: middle; }
+  h1.title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 72px;
+    line-height: 0.96;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+    margin-bottom: 14px;
+    color: var(--ink);
+  }
+  h1.title em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .subtitle {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    color: var(--ink-2);
+    font-weight: 400;
+    max-width: 780px;
+    line-height: 1.4;
+    margin-bottom: 22px;
+  }
+  .author-line {
+    font-size: 14px;
+    color: var(--ink-3);
+    padding: 14px 0 0;
+    border-top: 1px solid var(--rule-soft);
+    max-width: 780px;
+    font-style: italic;
+  }
+  .author-line strong { color: var(--ink-2); font-style: normal; font-weight: 600; }
+
+  /* ===== LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 56px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 64px 80px;
+  }
+
+  /* ===== TOC ===== */
+  .toc {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    font-size: 13px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .toc-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc li {
+    counter-increment: toc;
+    margin-bottom: 2px;
+  }
+  .toc a {
+    display: block;
+    padding: 5px 10px 5px 36px;
+    color: var(--ink-2);
+    text-decoration: none;
+    border-radius: 3px;
+    transition: all 0.15s;
+    position: relative;
+    line-height: 1.35;
+  }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    position: absolute;
+    left: 8px;
+    top: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .toc a:hover {
+    background: var(--bg-tint);
+    color: var(--accent);
+  }
+  .toc a.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .toc a.active::before { color: var(--accent); }
+
+  /* ===== MAIN CONTENT ===== */
+  main { min-width: 0; }
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  section + section { padding-top: 8px; }
+
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 38px;
+    line-height: 1.1;
+    letter-spacing: -0.018em;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+  h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 22px;
+    margin-top: 28px;
+    margin-bottom: 10px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    color: var(--ink-2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  p { margin-bottom: 14px; color: var(--ink-2); max-width: 78ch; }
+  p strong { color: var(--ink); font-weight: 600; }
+
+  ul, ol { margin-bottom: 16px; padding-left: 22px; color: var(--ink-2); }
+  ul li, ol li { margin-bottom: 6px; max-width: 76ch; }
+  ul li::marker { color: var(--accent); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    background: var(--gold-soft);
+    color: var(--ink);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+
+  /* ===== CODE BLOCK ===== */
+  .code {
+    background: var(--code-bg);
+    border-radius: 6px;
+    margin: 16px 0 22px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #2a2823;
+    position: relative;
+  }
+  .code-head {
+    background: #252320;
+    padding: 8px 14px;
+    border-bottom: 1px solid #34322c;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .code-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #948d7d;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+  }
+  .copy {
+    background: transparent;
+    color: #948d7d;
+    border: 1px solid #4a4640;
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+  .copy:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .copy.ok { background: #2a5d3e; color: #d4e8d4; border-color: #2a5d3e; }
+  .code pre {
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--code-ink);
+    background: transparent;
+  }
+  .code .c { color: var(--code-comment); font-style: italic; }
+  .code .k { color: var(--code-keyword); }
+  .code .s { color: var(--code-string); }
+  .code .t { color: var(--code-tag); }
+
+  /* ===== CALLOUTS ===== */
+  .note {
+    background: var(--paper);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    margin: 18px 0;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .note.warn { border-left-color: var(--gold); background: var(--gold-soft); }
+  .note.danger { border-left-color: var(--danger); background: var(--danger-soft); }
+  .note.ok { border-left-color: var(--teal); background: var(--teal-soft); }
+  .note-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .note.warn .note-head { color: var(--gold); }
+  .note.danger .note-head { color: var(--danger); }
+  .note.ok .note-head { color: var(--teal); }
+  .note p:last-child { margin-bottom: 0; }
+  .note p { max-width: 70ch; color: var(--ink); }
+
+  .aside {
+    background: var(--gold-soft);
+    border-top: 2px solid var(--gold);
+    border-bottom: 2px solid var(--gold);
+    padding: 18px 22px;
+    margin: 22px 0;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .aside .aside-tag {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-style: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  /* ===== TABLE ===== */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 22px;
+    font-size: 13.5px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .tbl th {
+    background: var(--bg-tint);
+    text-align: left;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+    font-weight: 600;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tbl td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+    color: var(--ink-2);
+    vertical-align: top;
+  }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl code { font-size: 0.92em; background: var(--bg-tint); }
+
+  /* ===== CARDS ===== */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 22px; }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 16px 18px;
+  }
+  .card-head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .card h4 { margin-top: 0; margin-bottom: 8px; text-transform: none; letter-spacing: 0; font-size: 15px; }
+  .card p { font-size: 13.5px; margin-bottom: 0; }
+
+  /* ===== FOOTER ===== */
+  footer {
+    border-top: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 36px 64px 48px;
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+  footer .signoff {
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-2);
+    margin-bottom: 18px;
+    letter-spacing: normal;
+  }
+  footer .designer {
+    margin-top: 14px;
+    color: var(--ink-2);
+    font-size: 12px;
+  }
+  footer .designer strong { color: var(--accent); font-weight: 600; }
+
+  @media (max-width: 980px) {
+    .masthead { padding: 32px 24px 24px; }
+    h1.title { font-size: 44px; }
+    .subtitle { font-size: 18px; }
+    .layout { grid-template-columns: 1fr; padding: 24px; gap: 24px; }
+    .toc { position: static; max-height: none; }
+    .cards { grid-template-columns: 1fr; }
+    footer { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== MASTHEAD ===== -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="eyebrow">Migration Guide<span class="dot"></span>WAS Traditional → Open Liberty<span class="dot"></span>v1.0</div>
+    <h1 class="title">JAX-RPC'den <em>JAX-WS'e</em><br>uçtan uca geçiş</h1>
+    <p class="subtitle">Eski bir SOAP servisini Liberty üzerinde yeniden ayağa kaldırmak için adım adım rehber. Maven projesi mi, Eclipse Dynamic Web Project mı — fark etmiyor. Açtığın gibi başla.</p>
+    <p class="author-line">Bu notlar tek bir uygulamadan değil, birden fazla geçişten süzülerek çıktı. İlk seferinde batırdığım, ikincide şaşırarak yine batırdığım, üçüncüde sonunda öğrendiğim şeyler. — <strong>mertugral</strong></p>
+  </div>
+</header>
+
+<!-- ===== LAYOUT ===== -->
+<div class="layout">
+
+<!-- ===== TOC ===== -->
+<nav class="toc">
+  <div class="toc-title">İçindekiler</div>
+  <ol>
+    <li><a href="#s01">Önce anla</a></li>
+    <li><a href="#s02">Tespit — Maven mi, Eclipse mi</a></li>
+    <li><a href="#s03">Maven'e çevirme</a></li>
+    <li><a href="#s04">Keşif taraması</a></li>
+    <li><a href="#s05">WSDL'i yerinde bırak</a></li>
+    <li><a href="#s06">Silinecekler</a></li>
+    <li><a href="#s07">Tutulacaklar</a></li>
+    <li><a href="#s08">web.xml — minimal hale</a></li>
+    <li><a href="#s09">pom.xml — tam template</a></li>
+    <li><a href="#s10">Dependency çıkarma</a></li>
+    <li><a href="#s11">Custom JAR'lar</a></li>
+    <li><a href="#s12">@WebService — sade hali</a></li>
+    <li><a href="#s13">@XmlAccessorType</a></li>
+    <li><a href="#s14">log4j temizliği</a></li>
+    <li><a href="#s15">server.xml</a></li>
+    <li><a href="#s16">Build &amp; deploy</a></li>
+    <li><a href="#s17">Doğrulama</a></li>
+    <li><a href="#s18">Sık görülen hatalar</a></li>
+    <li><a href="#s19">Hızlı referans</a></li>
+  </ol>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+<!-- 01 -->
+<section id="s01">
+  <div class="section-number">BÖLÜM 01</div>
+  <h2>Önce anla — neyi neye dönüştürüyoruz</h2>
+  <p>JAX-RPC, 2000'lerin başında IBM ekosisteminin SOAP standardıydı. WSDL-first bir model; class'ları sen yazmazsın, WSDL'den üretilir. Konfigürasyon dosyaları (<code>webservices.xml</code>, <code>*_mapping.xml</code>, <code>ibm-webservices-*.xmi</code>) servletten ayrı bir dünyaydı. WAS Traditional bu dünyayı kendi içinde yönetiyordu.</p>
+  <p>JAX-WS bambaşka bir felsefe getirdi: <strong>annotation tabanlı, kod-merkezli</strong>. Bir XML dosyası okumana gerek yok. Class'ın üstüne <code>@WebService</code> yazıyorsun, container geri kalanı çözüyor. Liberty bu modeli native destekliyor; JAX-RPC'yi <em>desteklemiyor</em>. Bu yüzden dönüşüm zorunlu, opsiyonel değil.</p>
+
+  <div class="note">
+    <div class="note-head">Pratik fark</div>
+    <p>JAX-RPC: WSDL → tool → Java stub → XML config'le bağla. JAX-WS: Java class + <code>@WebService</code> → bitti. WSDL'i hâlâ kullanıyoruz ama container yönetiyor, sen değil.</p>
+  </div>
+
+  <h3>Bu rehberin yapacağı şey</h3>
+  <ul>
+    <li>Eski uygulamayı standart Maven yapısına geçirmek</li>
+    <li>JAX-RPC'ye özgü tüm dosyaları (config, mapping, IBM extension) temizlemek</li>
+    <li>Service impl class'larına <code>@WebService</code> annotation eklemek</li>
+    <li>Bean class'larına JAXB annotation'larını yerleştirmek</li>
+    <li>pom.xml'i sıfırdan kurmak, Liberty üzerinde çalışır WAR üretmek</li>
+  </ul>
+</section>
+
+<!-- 02 -->
+<section id="s02">
+  <div class="section-number">BÖLÜM 02</div>
+  <h2>Tespit — Maven projesi mi, Eclipse projesi mi</h2>
+  <p>İlk yapacağın şey: önündeki uygulama hangi tipte? Çünkü ilk adımlar buna göre değişiyor.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-head">Maven projesi ise</div>
+      <h4>pom.xml var, src/main/java var</h4>
+      <p>Bölüm 03'ü atla, doğrudan <strong>Bölüm 04 (Keşif)</strong> ile başla.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Eclipse Dynamic Web Project ise</div>
+      <h4>.project + WebContent klasörü var, pom.xml yok</h4>
+      <p><strong>Bölüm 03</strong>'ten devam et. Önce Maven yapısına çevirmen lazım.</p>
+    </div>
+  </div>
+
+  <h3>Hızlı kontrol</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">terminal · proje kök dizininde</span><button class="copy">Kopyala</button></div>
+<pre>dir pom.xml
+dir WebContent
+dir .project</pre>
+  </div>
+  <p><code>pom.xml</code> görünüyorsa Maven. <code>WebContent</code> görünüyorsa Eclipse. İkisi de varsa karma bir durumun; muhtemelen yarım kalmış bir dönüşüm. O zaman Bölüm 03'ten yine geç, eksikleri tamamla.</p>
+</section>
+
+<!-- 03 -->
+<section id="s03">
+  <div class="section-number">BÖLÜM 03</div>
+  <h2>Eclipse projesini Maven'e çevirme</h2>
+  <p>Yedi adım. Her birini sırayla yap, atlama.</p>
+
+  <h3>1 · Yedek al</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre>cd <span class="t">..\</span>
+xcopy /E /I <span class="s">uygulamaAdi</span> <span class="s">uygulamaAdi-backup</span>
+cd <span class="s">uygulamaAdi</span></pre>
+  </div>
+  <p>Git kullanıyorsan ek olarak commit at: <code>git add -A &amp;&amp; git commit -m "migration oncesi"</code>. Hata yaptığında geri dönecek bir yer her zaman olsun.</p>
+
+  <h3>2 · Maven klasörlerini oluştur</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre>mkdir src\main\java
+mkdir src\main\resources
+mkdir src\main\webapp\WEB-INF
+mkdir src\test\java</pre>
+  </div>
+
+  <h3>3 · Java kodlarını taşı</h3>
+  <p>Eclipse projelerinde Java kodu genelde <code>src\</code> doğrudan altında olur (örn: <code>src\com\firma\uygulama\</code>). Bunu yeni yere taşı:</p>
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre><span class="c">:: var olan paketi yeni yere taşı</span>
+xcopy /E /I src\com src\main\java\com
+
+<span class="c">:: doğrula</span>
+dir src\main\java\com
+
+<span class="c">:: doğruysa eski klasörü sil</span>
+rmdir /s /q src\com</pre>
+  </div>
+  <p>İçindeki paket adı <code>com</code> değilse (<code>tr</code>, <code>org</code>, vb.) o adı kullan.</p>
+
+  <h3>4 · WebContent içeriğini taşı</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre>xcopy /E /I WebContent\META-INF src\main\webapp\META-INF
+xcopy /E /I WebContent\WEB-INF  src\main\webapp\WEB-INF</pre>
+  </div>
+  <div class="note warn">
+    <div class="note-head">Önemli</div>
+    <p>WSDL dosyaların büyük ihtimalle <code>WebContent\WEB-INF\wsdl\</code> içinde. Bu taşıma ile birlikte hedef yer olan <code>src\main\webapp\WEB-INF\wsdl\</code>'ye geliyorlar — <strong>doğru yer orası, taşıma sonrası başka yere kaydırma.</strong> Sebep Bölüm 05'te.</p>
+  </div>
+
+  <h3>5 · Properties dosyalarını resources'a taşı</h3>
+  <p>Eski projelerde properties dosyaları (<code>app.properties</code>, <code>i18n*.properties</code>) genelde <code>src\</code> kökünde veya <code>WebContent\WEB-INF\classes\</code> içinde durur. Hangisinden olduğunu bul, hepsini <code>src\main\resources\</code> içine taşı.</p>
+
+  <h3>6 · Eski klasörleri kaldır</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre>rmdir /s /q WebContent
+del .classpath
+del .project
+rmdir /s /q .settings</pre>
+  </div>
+
+  <h3>7 · pom.xml oluştur</h3>
+  <p>Boş bir <code>pom.xml</code> dosyası aç. İçeriğini Bölüm 09'da bulacaksın. Hemen yazma — önce keşif yap (Bölüm 04), çünkü pom'un içine girecek dependency listesi onun çıktısı.</p>
+
+  <div class="aside">
+    <span class="aside-tag">kenar notu</span>
+    Burada en çok hata, <em>"WebContent'i silmek"</em> adımında oluyor. Silmeden önce taşımanın gerçekten başarılı olduğunu gözle doğrula. Bir keresinde xcopy'nin sessizce başarısız olduğu bir senaryoyla karşılaştım — taşıdığımı sandığım WSDL dosyası yeni yerde yoktu, silmiştim, geri dönüş yok. Yedek olmasa bitmiştim.
+  </div>
+</section>
+
+<!-- 04 -->
+<section id="s04">
+  <div class="section-number">BÖLÜM 04</div>
+  <h2>Keşif taraması — bütün JAX-RPC izlerini bul</h2>
+  <p>Şimdi proje Maven yapısında. Sırada: içerideki tüm JAX-RPC kalıntılarını listelemek. Tek seferde gör, sonra plan yap.</p>
+
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd · proje kökünde</span><button class="copy">Kopyala</button></div>
+<pre><span class="c">:: JAX-RPC config dosyaları</span>
+dir /s /b webservices.xml
+dir /s /b *_mapping.xml
+dir /s /b ibm-webservices-*.xmi
+dir /s /b ibm-web*.xml
+
+<span class="c">:: kod içinde JAX-RPC import'u olan dosyalar</span>
+findstr /s /i "javax.xml.rpc" src\main\java\*.java
+findstr /s /i "ServiceLifecycle" src\main\java\*.java
+
+<span class="c">:: WSDL dosyaları</span>
+dir /s /b *.wsdl
+
+<span class="c">:: WEB-INF/lib içindeki tüm JAR'lar</span>
+dir /b src\main\webapp\WEB-INF\lib</pre>
+  </div>
+
+  <p>Bu çıktıları bir kenara not al. Sonraki bölümlerde tek tek nereden çıkacaklarını göstereceğim.</p>
+</section>
+
+<!-- 05 -->
+<section id="s05">
+  <div class="section-number">BÖLÜM 05</div>
+  <h2>WSDL'i yerinde bırak</h2>
+  <p>Eski projelerde WSDL <code>src/main/webapp/WEB-INF/wsdl/</code> içinde olur. Bunu <strong>aynen orada bırakıyoruz</strong>. Başka yere taşıma — özellikle <code>META-INF/wsdl</code>'e taşıma.</p>
+
+  <div class="note warn">
+    <div class="note-head">Neden burada</div>
+    <p>Liberty, <code>WEB-INF/wsdl/</code> içindeki WSDL'i otomatik tanıyor. Annotation'da <code>wsdlLocation = "WEB-INF/wsdl/ServisAdi.wsdl"</code> yazınca bu yolu direkt bulup yüklüyor. Bu, en az direnç gösteren yol — ve sahada her seferinde çalışan tek yol.</p>
+  </div>
+
+  <div class="note danger">
+    <div class="note-head">META-INF/wsdl tuzağı</div>
+    <p>Internet'te "WSDL'i META-INF/wsdl'e koy" diyen bir sürü tutorial var. Denedim, sahada çalışmadı. Liberty bazen WSDL'i kendisi üretiyor (annotation-only mod), bazen senin WSDL'inle senin WSDL'in arasında karışıyor; sonuç olarak SOAP yanıtlarında parametre isimleri <code>arg0</code>, <code>arg1</code> olarak geliyor. İstemci tarafı patlıyor. Bu yola sapmak için iyi bir sebep yoksa <strong>sapma</strong>.</p>
+  </div>
+
+  <h3>Sonuç olarak dosya yapın şu olmalı</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">hedef yapı</span><button class="copy">Kopyala</button></div>
+<pre>src/
+└── main/
+    ├── java/
+    │   └── com/firma/uygulama/...
+    ├── resources/
+    │   └── *.properties
+    └── webapp/
+        ├── META-INF/
+        │   └── MANIFEST.MF
+        └── WEB-INF/
+            ├── web.xml
+            └── wsdl/
+                ├── ServisAdi.wsdl
+                └── *.xsd</pre>
+  </div>
+</section>
+
+<!-- 06 -->
+<section id="s06">
+  <div class="section-number">BÖLÜM 06</div>
+  <h2>Silinecek dosyalar</h2>
+  <p>Bu dosyalar JAX-RPC dünyasına ait. JAX-WS bunları tanımıyor, dahası, varlıkları deploy hatasına neden oluyor.</p>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>Dosya</th><th>Nedir</th><th>Sil mi?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>webservices.xml</code></td><td>JAX-RPC service descriptor</td><td>Evet</td></tr>
+      <tr><td><code>*_mapping.xml</code></td><td>WSDL-Java mapping</td><td>Evet</td></tr>
+      <tr><td><code>ibm-webservices-bnd.xmi</code></td><td>WAS binding</td><td>Evet</td></tr>
+      <tr><td><code>ibm-webservices-ext.xmi</code></td><td>WAS extension</td><td>Evet</td></tr>
+      <tr><td><code>ibm-webservicesclient-bnd.xmi</code></td><td>WAS client binding</td><td>Evet (varsa)</td></tr>
+      <tr><td><code>ibm-web-bnd.xml</code></td><td>WAS web binding</td><td>Evet</td></tr>
+      <tr><td><code>ibm-web-ext.xml</code></td><td>WAS web extension</td><td>Evet</td></tr>
+      <tr><td><code>WEB-INF/lib/axis-*.jar</code></td><td>Eski SOAP stack</td><td>Evet</td></tr>
+      <tr><td><code>WEB-INF/lib/jaxrpc-*.jar</code></td><td>JAX-RPC API</td><td>Evet</td></tr>
+      <tr><td><code>WEB-INF/lib/saaj-impl-*.jar</code></td><td>Eski SAAJ</td><td>Evet</td></tr>
+      <tr><td><code>WEB-INF/lib/wsdl4j-*.jar</code></td><td>JAX-RPC bağımlısı</td><td>Evet</td></tr>
+    </tbody>
+  </table>
+
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre>cd src\main\webapp\WEB-INF
+del webservices.xml
+del *_mapping.xml
+del ibm-webservices-*.xmi
+del ibm-webservicesclient-*.xmi
+del ibm-web-bnd.xml
+del ibm-web-ext.xml
+cd lib
+del axis-*.jar jaxrpc-*.jar saaj-impl-*.jar wsdl4j-*.jar</pre>
+  </div>
+
+  <h3>"Şüpheli — önce içine bak" kategorisi</h3>
+  <ul>
+    <li><strong>Servlet class'ları:</strong> <code>extends HttpServlet</code> yapan ama <code>doGet/doPost</code> içinde gerçek iş yapan bir sınıf varsa tutuyoruz. Sadece JAX-RPC için var olan (ör. servletten servisi açan generic class) varsa siliyoruz.</li>
+    <li><strong>Filter class'ları:</strong> Custom logic varsa tut. JAX-RPC'ye özgüyse sil.</li>
+    <li><strong>Log4jInit.java tarzı dosyalar:</strong> Bunlar genelde silinir. Bölüm 14'te detay var.</li>
+  </ul>
+</section>
+
+<!-- 07 -->
+<section id="s07">
+  <div class="section-number">BÖLÜM 07</div>
+  <h2>Tutulacak dosyalar</h2>
+  <p>Aşağıdakiler kalıyor — ama bazılarına dokunmamız gerekecek.</p>
+  <ul>
+    <li><strong>Service impl class'lar</strong> — üzerlerine <code>@WebService</code> ekleyeceğiz (Bölüm 12).</li>
+    <li><strong>Bean / DTO class'lar</strong> — JAXB annotation alacaklar (Bölüm 13).</li>
+    <li><strong>WSDL ve XSD dosyaları</strong> — <code>WEB-INF/wsdl/</code> içinde, dokunma.</li>
+    <li><strong>DAO, Manager, Util, Helper sınıfları</strong> — custom kodun, olduğu gibi kalır.</li>
+    <li><strong>Properties dosyaları</strong> — <code>src/main/resources/</code>'a taşınmış olarak.</li>
+    <li><strong>Tek bir <code>log4j2.xml</code></strong> — diğer log4j varyantları (prod, test, component.properties) silinir.</li>
+  </ul>
+</section>
+
+<!-- 08 -->
+<section id="s08">
+  <div class="section-number">BÖLÜM 08</div>
+  <h2>web.xml'i minimal hale getir</h2>
+  <p>Eski <code>web.xml</code> içinde JAX-RPC servlet tanımları ve listener'lar olabilir. Hepsi gider. Liberty annotation'ları kendi okuyor; servisi <code>web.xml</code>'de tanımlamana gerek yok.</p>
+
+  <h4>Silinecek bölümler</h4>
+  <ul>
+    <li><code>&lt;servlet&gt;</code> blokları (eğer sadece WS için varsa)</li>
+    <li><code>&lt;servlet-mapping&gt;</code> (yine sadece WS için olanlar)</li>
+    <li><code>&lt;listener&gt;</code> — Log4jInit, IBM listener'ları</li>
+    <li><code>&lt;context-param&gt;</code> — log4j config path gibi şeyler</li>
+  </ul>
+
+  <h4>Minimal web.xml</h4>
+  <div class="code">
+    <div class="code-head"><span class="code-label">src/main/webapp/WEB-INF/web.xml</span><button class="copy">Kopyala</button></div>
+<pre><span class="t">&lt;?xml</span> <span class="k">version</span>=<span class="s">"1.0"</span> <span class="k">encoding</span>=<span class="s">"UTF-8"</span><span class="t">?&gt;</span>
+<span class="t">&lt;web-app</span> <span class="k">xmlns</span>=<span class="s">"https://jakarta.ee/xml/ns/jakartaee"</span>
+         <span class="k">xmlns:xsi</span>=<span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+         <span class="k">xsi:schemaLocation</span>=<span class="s">"https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"</span>
+         <span class="k">version</span>=<span class="s">"5.0"</span><span class="t">&gt;</span>
+
+    <span class="t">&lt;display-name&gt;</span>UygulamaAdi<span class="t">&lt;/display-name&gt;</span>
+
+<span class="t">&lt;/web-app&gt;</span></pre>
+  </div>
+  <p>İçeride uygulamaya özgü ekstra ihtiyaç (security-constraint, filter, vb.) varsa onları koru. Sadece JAX-RPC artığı olanları temizle.</p>
+</section>
+
+<!-- 09 -->
+<section id="s09">
+  <div class="section-number">BÖLÜM 09</div>
+  <h2>pom.xml — tam template</h2>
+  <p>Aşağıdaki <code>pom.xml</code> üzerinden ilerle. Dependency listesi Bölüm 10'da; önce iskeleti kur.</p>
+
+  <div class="code">
+    <div class="code-head"><span class="code-label">pom.xml</span><button class="copy">Kopyala</button></div>
+<pre><span class="t">&lt;?xml</span> <span class="k">version</span>=<span class="s">"1.0"</span> <span class="k">encoding</span>=<span class="s">"UTF-8"</span><span class="t">?&gt;</span>
+<span class="t">&lt;project</span> <span class="k">xmlns</span>=<span class="s">"http://maven.apache.org/POM/4.0.0"</span><span class="t">&gt;</span>
+    <span class="t">&lt;modelVersion&gt;</span>4.0.0<span class="t">&lt;/modelVersion&gt;</span>
+
+    <span class="t">&lt;groupId&gt;</span>com.firma<span class="t">&lt;/groupId&gt;</span>
+    <span class="t">&lt;artifactId&gt;</span>uygulama-adi<span class="t">&lt;/artifactId&gt;</span>
+    <span class="t">&lt;version&gt;</span>1.0.0<span class="t">&lt;/version&gt;</span>
+    <span class="t">&lt;packaging&gt;</span>war<span class="t">&lt;/packaging&gt;</span>
+
+    <span class="t">&lt;properties&gt;</span>
+        <span class="t">&lt;maven.compiler.source&gt;</span>17<span class="t">&lt;/maven.compiler.source&gt;</span>
+        <span class="t">&lt;maven.compiler.target&gt;</span>17<span class="t">&lt;/maven.compiler.target&gt;</span>
+        <span class="t">&lt;project.build.sourceEncoding&gt;</span>UTF-8<span class="t">&lt;/project.build.sourceEncoding&gt;</span>
+    <span class="t">&lt;/properties&gt;</span>
+
+    <span class="t">&lt;dependencies&gt;</span>
+        <span class="c">&lt;!-- Jakarta EE — Liberty zaten sağlıyor, provided --&gt;</span>
+        <span class="t">&lt;dependency&gt;</span>
+            <span class="t">&lt;groupId&gt;</span>jakarta.platform<span class="t">&lt;/groupId&gt;</span>
+            <span class="t">&lt;artifactId&gt;</span>jakarta.jakartaee-api<span class="t">&lt;/artifactId&gt;</span>
+            <span class="t">&lt;version&gt;</span>10.0.0<span class="t">&lt;/version&gt;</span>
+            <span class="t">&lt;scope&gt;</span>provided<span class="t">&lt;/scope&gt;</span>
+        <span class="t">&lt;/dependency&gt;</span>
+
+        <span class="c">&lt;!-- log4j2 --&gt;</span>
+        <span class="t">&lt;dependency&gt;</span>
+            <span class="t">&lt;groupId&gt;</span>org.apache.logging.log4j<span class="t">&lt;/groupId&gt;</span>
+            <span class="t">&lt;artifactId&gt;</span>log4j-core<span class="t">&lt;/artifactId&gt;</span>
+            <span class="t">&lt;version&gt;</span>2.23.1<span class="t">&lt;/version&gt;</span>
+        <span class="t">&lt;/dependency&gt;</span>
+        <span class="t">&lt;dependency&gt;</span>
+            <span class="t">&lt;groupId&gt;</span>org.apache.logging.log4j<span class="t">&lt;/groupId&gt;</span>
+            <span class="t">&lt;artifactId&gt;</span>log4j-api<span class="t">&lt;/artifactId&gt;</span>
+            <span class="t">&lt;version&gt;</span>2.23.1<span class="t">&lt;/version&gt;</span>
+        <span class="t">&lt;/dependency&gt;</span>
+
+        <span class="c">&lt;!-- Bölüm 10'daki tablodan ek bağımlılıklar buraya --&gt;</span>
+    <span class="t">&lt;/dependencies&gt;</span>
+
+    <span class="t">&lt;build&gt;</span>
+        <span class="t">&lt;finalName&gt;</span>uygulama-adi<span class="t">&lt;/finalName&gt;</span>
+        <span class="t">&lt;plugins&gt;</span>
+            <span class="t">&lt;plugin&gt;</span>
+                <span class="t">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="t">&lt;/groupId&gt;</span>
+                <span class="t">&lt;artifactId&gt;</span>maven-war-plugin<span class="t">&lt;/artifactId&gt;</span>
+                <span class="t">&lt;version&gt;</span>3.4.0<span class="t">&lt;/version&gt;</span>
+                <span class="t">&lt;configuration&gt;</span>
+                    <span class="t">&lt;failOnMissingWebXml&gt;</span>false<span class="t">&lt;/failOnMissingWebXml&gt;</span>
+                <span class="t">&lt;/configuration&gt;</span>
+            <span class="t">&lt;/plugin&gt;</span>
+        <span class="t">&lt;/plugins&gt;</span>
+    <span class="t">&lt;/build&gt;</span>
+<span class="t">&lt;/project&gt;</span></pre>
+  </div>
+
+  <div class="note ok">
+    <div class="note-head">Neden jaxws-maven-plugin yok</div>
+    <p>Bazı tutorial'larda görürsün — class'ları WSDL'den üretmek için. Bizim ihtiyacımız yok. Mevcut Java class'larımız var ve onları kullanıyoruz; WSDL sadece referans olarak <code>WEB-INF/wsdl/</code>'de duruyor. Plugin'i koyarsan <code>generated-sources</code> üretir, kafa karıştırır. Koyma.</p>
+  </div>
+
+  <div class="note warn">
+    <div class="note-head">Neden webResources bölümü yok</div>
+    <p>WSDL <code>src/main/webapp/WEB-INF/wsdl/</code>'de, yani Maven'in <strong>varsayılan web kaynak yolunda</strong>. <code>webResources</code> ile başka yerden kopyalamana gerek yok. Eklersen tehlikeli — kopya WSDL'ler oluşur, hangi WSDL'in çalıştığını anlayamazsın.</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <div class="section-number">BÖLÜM 10</div>
+  <h2>Dependency çıkarma — JAR adından pom satırına</h2>
+  <p>Bölüm 04'te <code>WEB-INF/lib</code> içindeki JAR'ları listeledin. Şimdi her birini <code>pom.xml</code>'de karşılığını bulmamız lazım. İki yol var.</p>
+
+  <h3>Yol 1: JAR adından çıkarım</h3>
+  <p>Çoğu zaman JAR adı <code>artifact-version.jar</code> formatında. <code>jackson-databind-2.15.2.jar</code> → <code>jackson-databind</code> + <code>2.15.2</code>. <code>groupId</code>'yi <a href="https://search.maven.org/" target="_blank">Maven Central</a>'da arar bulursun.</p>
+
+  <h3>Yol 2: JAR'ın içindeki MANIFEST</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">windows · cmd</span><button class="copy">Kopyala</button></div>
+<pre>cd src\main\webapp\WEB-INF\lib
+jar tf jackson-databind-2.15.2.jar | findstr pom.properties</pre>
+  </div>
+  <p>Çıkan dosyayı extract edersen <code>groupId</code>, <code>artifactId</code>, <code>version</code> üçü de yazıyor.</p>
+
+  <h3>Yaygın JAR'lar — referans tablosu</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>JAR adı</th><th>groupId</th><th>artifactId</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>jackson-core</td><td>com.fasterxml.jackson.core</td><td>jackson-core</td></tr>
+      <tr><td>jackson-databind</td><td>com.fasterxml.jackson.core</td><td>jackson-databind</td></tr>
+      <tr><td>jackson-annotations</td><td>com.fasterxml.jackson.core</td><td>jackson-annotations</td></tr>
+      <tr><td>commons-lang3</td><td>org.apache.commons</td><td>commons-lang3</td></tr>
+      <tr><td>commons-io</td><td>commons-io</td><td>commons-io</td></tr>
+      <tr><td>slf4j-api</td><td>org.slf4j</td><td>slf4j-api</td></tr>
+      <tr><td>log4j-core</td><td>org.apache.logging.log4j</td><td>log4j-core</td></tr>
+      <tr><td>log4j-api</td><td>org.apache.logging.log4j</td><td>log4j-api</td></tr>
+      <tr><td>kafka-clients</td><td>org.apache.kafka</td><td>kafka-clients</td></tr>
+      <tr><td>httpclient</td><td>org.apache.httpcomponents</td><td>httpclient</td></tr>
+      <tr><td>gson</td><td>com.google.code.gson</td><td>gson</td></tr>
+      <tr><td>guava</td><td>com.google.guava</td><td>guava</td></tr>
+      <tr><td>ojdbc8 / ojdbc11</td><td>com.oracle.database.jdbc</td><td>ojdbc8</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Asla pom'a alma</h3>
+  <ul>
+    <li><strong>Jakarta / Java EE API JAR'ları</strong> — <code>servlet-api</code>, <code>jaxws-api</code>, <code>jaxb-api</code>, <code>jsp-api</code>. Liberty bunları sağlıyor; eklersen sınıf yükleme çakışması.</li>
+    <li><strong>JAX-RPC JAR'ları</strong> — <code>axis</code>, <code>jaxrpc</code>, <code>wsdl4j</code>. Zaten silmen lazımdı.</li>
+    <li><strong>IBM-specific JAR'lar</strong> — <code>com.ibm.ws.*</code> içeren JAR'lar. WAS Traditional'a özgü.</li>
+  </ul>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <div class="section-number">BÖLÜM 11</div>
+  <h2>Custom JAR'lar — Maven Central'da olmayanlar</h2>
+  <p>Bazı JAR'lar şirket içi olur; Central'da bulamazsın. Üç seçenek var, sırasıyla tercih.</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-head">Tercih 1</div>
+      <h4>Şirket Nexus / Artifactory</h4>
+      <p>Şirketin bir repository sunucusu varsa <code>pom.xml</code>'e <code>&lt;repositories&gt;</code> ekle, oradan çek. En temiz yol.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Tercih 2</div>
+      <h4>Local install</h4>
+      <p><code>mvn install:install-file</code> ile lokal Maven cache'ine kur. Tek geliştirici için pratik, takım için sürdürülemez.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Tercih 3</div>
+      <h4>System scope</h4>
+      <p>JAR'ı projeye <code>lib/</code> klasörüne koy, pom'da <code>&lt;scope&gt;system&lt;/scope&gt;</code> ile path göster. En son çare.</p>
+    </div>
+  </div>
+
+  <h3>Tercih 2 — komut</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">terminal</span><button class="copy">Kopyala</button></div>
+<pre>mvn install:install-file <span class="k">^</span>
+    -Dfile=<span class="s">"./lib/custom-lib-1.2.jar"</span> <span class="k">^</span>
+    -DgroupId=<span class="s">com.firma</span> <span class="k">^</span>
+    -DartifactId=<span class="s">custom-lib</span> <span class="k">^</span>
+    -Dversion=<span class="s">1.2</span> <span class="k">^</span>
+    -Dpackaging=<span class="s">jar</span></pre>
+  </div>
+
+  <h3>Tercih 3 — pom satırı</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">pom.xml içinde</span><button class="copy">Kopyala</button></div>
+<pre><span class="t">&lt;dependency&gt;</span>
+    <span class="t">&lt;groupId&gt;</span>com.firma<span class="t">&lt;/groupId&gt;</span>
+    <span class="t">&lt;artifactId&gt;</span>custom-lib<span class="t">&lt;/artifactId&gt;</span>
+    <span class="t">&lt;version&gt;</span>1.2<span class="t">&lt;/version&gt;</span>
+    <span class="t">&lt;scope&gt;</span>system<span class="t">&lt;/scope&gt;</span>
+    <span class="t">&lt;systemPath&gt;</span>${project.basedir}/lib/custom-lib-1.2.jar<span class="t">&lt;/systemPath&gt;</span>
+<span class="t">&lt;/dependency&gt;</span></pre>
+  </div>
+  <div class="note warn">
+    <div class="note-head">System scope ek adım</div>
+    <p>System scope JAR'lar varsayılan olarak WAR'a girmez. <code>maven-war-plugin</code>'in <code>packagingIncludes</code>'ına eklemen lazım, yoksa Liberty NoClassDefFoundError fırlatır.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <div class="section-number">BÖLÜM 12</div>
+  <h2>@WebService — sade ve doğru kullanım</h2>
+  <p>Service implementation class'a <code>@WebService</code> ekliyoruz. <strong>Yalın hali</strong> kullanılır — çoğu örnekteki ek attribute'lar bizim için sorun çıkarır.</p>
+
+  <div class="code">
+    <div class="code-head"><span class="code-label">com/firma/uygulama/servis/ServisAdiImpl.java</span><button class="copy">Kopyala</button></div>
+<pre><span class="k">package</span> com.firma.uygulama.servis;
+
+<span class="k">import</span> jakarta.jws.WebService;
+
+<span class="t">@WebService</span>(
+    serviceName = <span class="s">"ServisAdi"</span>,
+    portName    = <span class="s">"ServisAdiPort"</span>,
+    targetNamespace = <span class="s">"http://uygulama.firma.com/"</span>,
+    wsdlLocation = <span class="s">"WEB-INF/wsdl/ServisAdi.wsdl"</span>
+)
+<span class="k">public class</span> ServisAdiImpl {
+
+    <span class="k">public</span> Sonuc islemYap(Musteri musteri) {
+        <span class="c">// iş mantığı</span>
+        <span class="k">return new</span> Sonuc();
+    }
+}</pre>
+  </div>
+
+  <h3>Bu yaklaşımın dört kuralı</h3>
+  <ol>
+    <li><strong><code>endpointInterface</code> KULLANMA.</strong> Bir SEI (Service Endpoint Interface) varsa ve onu işaret edersen Liberty SEI'yi okuyup gerisini görmezden geliyor; impl'deki method değişikliklerin uygulanmıyor. Annotation'ı doğrudan impl'e yaz, SEI'ye değil.</li>
+    <li><strong><code>@WebMethod</code> ve <code>@WebParam</code> EKLEME.</strong> Bunlar mevcut method imzasını kendi WSDL'inle eşleştirmek için gibi görünüyor — gerçekte WSDL üretimini değiştiriyor, parametre isimlerin <code>arg0</code>'a düşüyor. <code>wsdlLocation</code> ile dış WSDL'i bağladığımız için gerek yok.</li>
+    <li><strong><code>wsdlLocation</code> kullan.</strong> Bu sayede istemciler eski WSDL'i görmeye devam ediyor — backward compatibility kırılmıyor.</li>
+    <li><strong><code>serviceName</code> ve <code>portName</code></strong> WSDL'de yazan isimlerle <em>birebir</em> aynı olmalı. Tek harf fark — Liberty servisi tanımıyor, 404 dönüyor.</li>
+  </ol>
+
+  <div class="aside">
+    <span class="aside-tag">benim ders aldığım yer</span>
+    <code>@WebMethod(operationName="...")</code> eklemenin daha "doğru" olduğunu sanıp ekledim. Soap mesajları yine geliyordu ama içindeki parametre adı <code>arg0</code> oldu. İstemci eski parametre adıyla gönderdiği için unmarshalling sessizce null'la sonuçlandı. Bu noktayı bulmak yarım günümü aldı. Sade tut, fazlasını yapma — bu işin altın kuralı.
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <div class="section-number">BÖLÜM 13</div>
+  <h2>@XmlAccessorType(FIELD) — bean class'larına</h2>
+  <p>Servisin alıp döndürdüğü her bean / DTO class'a JAXB annotation'ı eklemen lazım. Tek satır:</p>
+
+  <div class="code">
+    <div class="code-head"><span class="code-label">com/firma/uygulama/model/Musteri.java</span><button class="copy">Kopyala</button></div>
+<pre><span class="k">package</span> com.firma.uygulama.model;
+
+<span class="k">import</span> jakarta.xml.bind.annotation.XmlAccessType;
+<span class="k">import</span> jakarta.xml.bind.annotation.XmlAccessorType;
+
+<span class="t">@XmlAccessorType</span>(XmlAccessType.FIELD)
+<span class="k">public class</span> Musteri {
+
+    <span class="k">private</span> String ad;
+    <span class="k">private</span> String soyad;
+    <span class="k">private</span> int yas;
+
+    <span class="c">// getter / setter'lar</span>
+}</pre>
+  </div>
+
+  <div class="note warn">
+    <div class="note-head">Neden FIELD, neden PROPERTY değil</div>
+    <p>Varsayılan değer PUBLIC_MEMBER — JAXB hem field'ları hem getter/setter'ları okumaya çalışıyor, aynı alan iki kez serialize ediliyor: bir <code>&lt;ad&gt;Veli&lt;/ad&gt;</code>, bir <code>&lt;Ad&gt;Veli&lt;/Ad&gt;</code>. <strong>FIELD</strong> ile sadece field okunuyor, getter/setter sadece kodun çağırması için kalıyor. Temiz XML üretiyor.</p>
+  </div>
+
+  <p>Bu annotation'ı <strong>her bean class'a</strong> ekle. Atlanan tek bir bean varsa o class'ın geçtiği SOAP mesajı patlar.</p>
+</section>
+
+<!-- 14 -->
+<section id="s14">
+  <div class="section-number">BÖLÜM 14</div>
+  <h2>log4j temizliği</h2>
+  <p>Eski projelerde sıklıkla şu dosyalar bulunur:</p>
+  <ul>
+    <li><code>log4j2.xml</code></li>
+    <li><code>log4j2-prod.xml</code></li>
+    <li><code>log4j2-test.xml</code></li>
+    <li><code>log4j2.component.properties</code></li>
+    <li><code>Log4jInit.java</code></li>
+    <li><code>visolog3.json</code> veya benzeri uygulamaya-özgü log config'leri</li>
+  </ul>
+
+  <h3>Yapacaklar</h3>
+  <ol>
+    <li><strong>Tek bir <code>log4j2.xml</code> tut.</strong> Diğer environment-specific olanları (<code>-prod</code>, <code>-test</code>) sil. Environment'a göre log seviyesi Liberty'de <code>jvm.options</code> üzerinden yönetilir, dosya seçimiyle değil.</li>
+    <li><strong><code>Log4jInit.java</code>'yı sil.</strong> Eski WAS'ta servlet üzerinden log4j'yi başlatma pattern'iydi. log4j2 classpath'ten <code>log4j2.xml</code>'i kendi buluyor; init class'a ihtiyaç yok.</li>
+    <li><strong><code>log4j2.component.properties</code> ve <code>visolog3.json</code> gibi dosyaları sil</strong> — eğer uygulamanın gerçek bir bileşeni onları kullanmıyorsa. Kullanıp kullanmadığına emin değilsen <code>grep / findstr</code> ile referansını ara: <code>findstr /s /i "visolog3" src\main\java</code>. Çıktı boşsa sil.</li>
+  </ol>
+
+  <h3>Minimal log4j2.xml</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">src/main/resources/log4j2.xml</span><button class="copy">Kopyala</button></div>
+<pre><span class="t">&lt;?xml</span> <span class="k">version</span>=<span class="s">"1.0"</span> <span class="k">encoding</span>=<span class="s">"UTF-8"</span><span class="t">?&gt;</span>
+<span class="t">&lt;Configuration</span> <span class="k">status</span>=<span class="s">"WARN"</span><span class="t">&gt;</span>
+    <span class="t">&lt;Appenders&gt;</span>
+        <span class="t">&lt;Console</span> <span class="k">name</span>=<span class="s">"Console"</span> <span class="k">target</span>=<span class="s">"SYSTEM_OUT"</span><span class="t">&gt;</span>
+            <span class="t">&lt;PatternLayout</span> <span class="k">pattern</span>=<span class="s">"%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"</span><span class="t">/&gt;</span>
+        <span class="t">&lt;/Console&gt;</span>
+    <span class="t">&lt;/Appenders&gt;</span>
+    <span class="t">&lt;Loggers&gt;</span>
+        <span class="t">&lt;Logger</span> <span class="k">name</span>=<span class="s">"com.firma.uygulama"</span> <span class="k">level</span>=<span class="s">"info"</span><span class="t">/&gt;</span>
+        <span class="t">&lt;Root</span> <span class="k">level</span>=<span class="s">"warn"</span><span class="t">&gt;</span>
+            <span class="t">&lt;AppenderRef</span> <span class="k">ref</span>=<span class="s">"Console"</span><span class="t">/&gt;</span>
+        <span class="t">&lt;/Root&gt;</span>
+    <span class="t">&lt;/Loggers&gt;</span>
+<span class="t">&lt;/Configuration&gt;</span></pre>
+  </div>
+</section>
+
+<!-- 15 -->
+<section id="s15">
+  <div class="section-number">BÖLÜM 15</div>
+  <h2>Liberty server.xml</h2>
+  <p>WAR'ı Liberty'de çalıştırmak için server.xml'in iki temel bölümü olmalı: <strong>feature listesi</strong> ve <strong>data source</strong> (uygulama DB kullanıyorsa).</p>
+
+  <div class="code">
+    <div class="code-head"><span class="code-label">server.xml</span><button class="copy">Kopyala</button></div>
+<pre><span class="t">&lt;server</span> <span class="k">description</span>=<span class="s">"uygulama-adi"</span><span class="t">&gt;</span>
+
+    <span class="t">&lt;featureManager&gt;</span>
+        <span class="t">&lt;feature&gt;</span>jakartaee-10.0<span class="t">&lt;/feature&gt;</span>
+        <span class="t">&lt;feature&gt;</span>xmlWS-4.0<span class="t">&lt;/feature&gt;</span>
+        <span class="t">&lt;feature&gt;</span>xmlBinding-4.0<span class="t">&lt;/feature&gt;</span>
+    <span class="t">&lt;/featureManager&gt;</span>
+
+    <span class="t">&lt;httpEndpoint</span> <span class="k">id</span>=<span class="s">"defaultHttpEndpoint"</span>
+                  <span class="k">host</span>=<span class="s">"*"</span>
+                  <span class="k">httpPort</span>=<span class="s">"9080"</span>
+                  <span class="k">httpsPort</span>=<span class="s">"9443"</span><span class="t">/&gt;</span>
+
+    <span class="t">&lt;application</span> <span class="k">id</span>=<span class="s">"uygulama-adi"</span>
+                 <span class="k">location</span>=<span class="s">"uygulama-adi.war"</span>
+                 <span class="k">name</span>=<span class="s">"uygulama-adi"</span><span class="t">/&gt;</span>
+
+    <span class="c">&lt;!-- DB gerekiyorsa --&gt;</span>
+    <span class="t">&lt;library</span> <span class="k">id</span>=<span class="s">"oracleJdbcLib"</span><span class="t">&gt;</span>
+        <span class="t">&lt;fileset</span> <span class="k">dir</span>=<span class="s">"${shared.resource.dir}/jdbc"</span> <span class="k">includes</span>=<span class="s">"ojdbc8.jar"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;/library&gt;</span>
+
+    <span class="t">&lt;dataSource</span> <span class="k">id</span>=<span class="s">"appDS"</span> <span class="k">jndiName</span>=<span class="s">"jdbc/appDS"</span><span class="t">&gt;</span>
+        <span class="t">&lt;jdbcDriver</span> <span class="k">libraryRef</span>=<span class="s">"oracleJdbcLib"</span><span class="t">/&gt;</span>
+        <span class="t">&lt;properties.oracle</span>
+            <span class="k">URL</span>=<span class="s">"jdbc:oracle:thin:@host:1521/SERVICE"</span>
+            <span class="k">user</span>=<span class="s">"kullanici"</span>
+            <span class="k">password</span>=<span class="s">"sifre"</span><span class="t">/&gt;</span>
+    <span class="t">&lt;/dataSource&gt;</span>
+
+<span class="t">&lt;/server&gt;</span></pre>
+  </div>
+
+  <p>Liberty 23+ versiyonlar için: <code>jaxws-2.2</code> yerine <strong><code>xmlWS-4.0</code></strong>; <code>jaxb-2.2</code> yerine <strong><code>xmlBinding-4.0</code></strong>. Eski feature isimleri çalışmaz.</p>
+</section>
+
+<!-- 16 -->
+<section id="s16">
+  <div class="section-number">BÖLÜM 16</div>
+  <h2>Build &amp; deploy</h2>
+
+  <h3>Build</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">terminal · proje kökünde</span><button class="copy">Kopyala</button></div>
+<pre>mvn clean package</pre>
+  </div>
+
+  <h3>Beklenen çıktı</h3>
+  <ul>
+    <li><code>target/uygulama-adi.war</code> üretildi.</li>
+    <li>Console'da <strong>BUILD SUCCESS</strong> yazıyor.</li>
+    <li>Warning olabilir, ama ERROR olmamalı.</li>
+  </ul>
+
+  <h3>Deploy</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">terminal</span><button class="copy">Kopyala</button></div>
+<pre><span class="c">:: WAR'ı Liberty'nin apps/ klasörüne kopyala</span>
+copy target\uygulama-adi.war <span class="s">"%LIBERTY_HOME%\usr\servers\defaultServer\apps\"</span>
+
+<span class="c">:: server'ı başlat</span>
+%LIBERTY_HOME%\bin\server start defaultServer</pre>
+  </div>
+
+  <h3>Logları izle</h3>
+  <div class="code">
+    <div class="code-head"><span class="code-label">terminal</span><button class="copy">Kopyala</button></div>
+<pre>type %LIBERTY_HOME%\usr\servers\defaultServer\logs\messages.log</pre>
+  </div>
+  <p>Beklenen satırlar:</p>
+  <ul>
+    <li><code>CWWKT0016I: Web application available ... /uygulama-adi/</code></li>
+    <li><code>CWWKZ0001I: Application uygulama-adi started ...</code></li>
+  </ul>
+</section>
+
+<!-- 17 -->
+<section id="s17">
+  <div class="section-number">BÖLÜM 17</div>
+  <h2>Doğrulama</h2>
+  <p>Dört test, sırasıyla. Birinde patlarsa Bölüm 18'e bak.</p>
+
+  <h3>Test 1: WSDL erişimi</h3>
+  <p>Tarayıcıda aç:</p>
+  <div class="code">
+    <div class="code-head"><span class="code-label">url</span><button class="copy">Kopyala</button></div>
+<pre>http://localhost:9080/uygulama-adi/ServisAdi?wsdl</pre>
+  </div>
+  <p>XML olarak WSDL gelmeli. Eğer 404 alıyorsan servis adı ya da context root yanlış.</p>
+
+  <h3>Test 2: SOAP UI / curl ile SOAP isteği</h3>
+  <p>Eski sistemde çalışan bir SOAP request örneği al, yeni URL'e gönder. Aynı response gelmeli — <strong>parametre isimleri aynı</strong>, alan adları aynı.</p>
+
+  <h3>Test 3: SOAP response'ta arg0 kontrolü</h3>
+  <p>Yanıt XML'inde parametre adları olarak <code>&lt;arg0&gt;</code>, <code>&lt;arg1&gt;</code> görüyorsan WSDL bağlantısı çalışmıyor demektir. <code>wsdlLocation</code> path'ini, <code>serviceName</code> / <code>portName</code> doğruluğunu, WSDL'in <code>WEB-INF/wsdl/</code>'de olduğunu kontrol et.</p>
+
+  <h3>Test 4: End-to-end senaryo</h3>
+  <p>Tam bir use case'i baştan sona çalıştır — DB bağlantısı, log üretimi, yanıt formatı dahil. Eski sistemde çalışan ne ise burada da bire bir çalışmalı.</p>
+</section>
+
+<!-- 18 -->
+<section id="s18">
+  <div class="section-number">BÖLÜM 18</div>
+  <h2>Sık görülen hatalar</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-head">Hata 01</div>
+      <h4>SOAP yanıtında arg0, arg1</h4>
+      <p><strong>Sebep:</strong> WSDL Liberty tarafından üretiliyor, dış WSDL bağlanmamış. <strong>Çözüm:</strong> <code>wsdlLocation</code>'ı kontrol et, WSDL <code>WEB-INF/wsdl/</code>'de mi? <code>@WebMethod / @WebParam</code> annotation'larını kaldır.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Hata 02</div>
+      <h4>NoClassDefFoundError</h4>
+      <p><strong>Sebep:</strong> pom'da bir dependency eksik, ya da <code>scope</code> yanlış (provided olmaması gereken provided olmuş). <strong>Çözüm:</strong> WAR içindeki <code>WEB-INF/lib</code>'i unzip ile bak — eksik JAR neyse pom'a ekle.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Hata 03</div>
+      <h4>XML çıktıda field iki kez</h4>
+      <p><strong>Sebep:</strong> Bean class'a <code>@XmlAccessorType(FIELD)</code> eklenmemiş, varsayılan PUBLIC_MEMBER hem field hem getter okuyor. <strong>Çözüm:</strong> Her bean'e annotation'ı ekle.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Hata 04</div>
+      <h4>Application failed to start</h4>
+      <p><strong>Sebep:</strong> <code>webservices.xml</code> veya <code>ibm-webservices-*.xmi</code> hâlâ WAR içinde. <strong>Çözüm:</strong> WAR'ı unzip ile aç, varlarsa source'tan sil ve yeniden build et.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Hata 05</div>
+      <h4>404 — service not found</h4>
+      <p><strong>Sebep:</strong> <code>serviceName</code> / <code>portName</code> WSDL'deki ile eşleşmiyor, ya da context root farklı. <strong>Çözüm:</strong> WSDL'deki <code>service name="..."</code> ve <code>port name="..."</code>'u birebir kopyala.</p>
+    </div>
+    <div class="card">
+      <div class="card-head">Hata 06</div>
+      <h4>java.lang.LinkageError</h4>
+      <p><strong>Sebep:</strong> pom'a <code>jakarta.servlet-api</code>, <code>jakarta.jws-api</code> gibi Liberty'nin zaten sağladığı API JAR'ları girmiş. <strong>Çözüm:</strong> Pom'daki Jakarta API dependency'lerine <code>scope=provided</code> ekle, ya da hepten sil (zaten <code>jakarta.jakartaee-api</code> içeriyor).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section id="s19">
+  <div class="section-number">BÖLÜM 19</div>
+  <h2>Hızlı referans</h2>
+
+  <h3>16 adım — özet</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>#</th><th>Adım</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td>Yedek al (xcopy + git commit)</td></tr>
+      <tr><td>02</td><td>Maven mi Eclipse mi tespit et</td></tr>
+      <tr><td>03</td><td>(Eclipse ise) Maven klasör yapısını oluştur</td></tr>
+      <tr><td>04</td><td>Java kodlarını <code>src/main/java</code>'ya taşı</td></tr>
+      <tr><td>05</td><td>WebContent'i <code>src/main/webapp</code>'a taşı</td></tr>
+      <tr><td>06</td><td><strong>WSDL'i yerinde bırak</strong> — <code>WEB-INF/wsdl/</code></td></tr>
+      <tr><td>07</td><td>JAX-RPC config + IBM dosyalarını sil</td></tr>
+      <tr><td>08</td><td>Eski JAR'ları <code>WEB-INF/lib</code>'den sil</td></tr>
+      <tr><td>09</td><td><code>web.xml</code>'i minimal hale getir</td></tr>
+      <tr><td>10</td><td>pom.xml'i oluştur (template'ten)</td></tr>
+      <tr><td>11</td><td>Dependency'leri tek tek çıkar</td></tr>
+      <tr><td>12</td><td>Service impl'e <code>@WebService</code> ekle</td></tr>
+      <tr><td>13</td><td>Bean class'lara <code>@XmlAccessorType(FIELD)</code> ekle</td></tr>
+      <tr><td>14</td><td>log4j artıklarını temizle, tek <code>log4j2.xml</code> bırak</td></tr>
+      <tr><td>15</td><td>server.xml'i hazırla (feature + dataSource)</td></tr>
+      <tr><td>16</td><td>Build, deploy, test (4 doğrulama)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Annotation cheatsheet</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>Annotation</th><th>Nereye</th><th>Ne için</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>@WebService</code></td><td>Service impl class</td><td>SOAP servisini açar</td></tr>
+      <tr><td><code>@XmlAccessorType(FIELD)</code></td><td>Her bean class</td><td>JAXB serialize için tek-yön okuma</td></tr>
+      <tr><td><code>@XmlElement</code></td><td>Field (opsiyonel)</td><td>Field adını XML'de değiştirmek için</td></tr>
+      <tr><td><code>@XmlRootElement</code></td><td>Top-level bean</td><td>Root element olarak ortaya çıkacaksa</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Silinecek dosyalar — son liste</h3>
+  <ul>
+    <li><code>WEB-INF/webservices.xml</code></li>
+    <li><code>WEB-INF/*_mapping.xml</code></li>
+    <li><code>WEB-INF/ibm-webservices-*.xmi</code></li>
+    <li><code>WEB-INF/ibm-webservicesclient-*.xmi</code></li>
+    <li><code>WEB-INF/ibm-web-bnd.xml</code> · <code>ibm-web-ext.xml</code></li>
+    <li><code>WEB-INF/lib/axis-*.jar</code> · <code>WEB-INF/lib/jaxrpc-*.jar</code></li>
+    <li>log4j ekstra config'leri (prod, test, component.properties)</li>
+    <li><code>Log4jInit.java</code> ve referansı olmayan ek log config'ler</li>
+  </ul>
+
+  <h3>Tutulması gereken dosyalar</h3>
+  <ul>
+    <li>Tüm impl class'lar (annotation eklenecek)</li>
+    <li>Tüm bean/DTO class'lar (JAXB annotation eklenecek)</li>
+    <li>WSDL ve XSD dosyaları (yerinde, <code>WEB-INF/wsdl/</code> altında)</li>
+    <li>DAO, Manager, Util, Helper (custom) sınıflar</li>
+    <li>Properties dosyaları (<code>src/main/resources/</code>'a taşınacak)</li>
+    <li>Tek <code>log4j2.xml</code></li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <div class="signoff">Sade kalmak — bu işin en zor kısmı.</div>
+  <div>migration notları · v1.0 · generic · production-ready</div>
+  <div class="designer">designed by <strong>mertugral</strong></div>
+</footer>
+
+<script>
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pre = btn.closest('.code').querySelector('pre');
+      const text = pre.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Kopyalandı ✓';
+        btn.classList.add('ok');
+        setTimeout(() => {
+          btn.textContent = 'Kopyala';
+          btn.classList.remove('ok');
+        }, 1800);
+      });
+    });
+  });
+
+  const sections = document.querySelectorAll('section[id]');
+  const tocLinks = document.querySelectorAll('.toc a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
