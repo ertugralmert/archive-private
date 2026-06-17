@@ -1,0 +1,55 @@
+vcenter: https://bvmvc02.sgk.intra
+
+
+sgk\sa.dtaydas
+Sgk202620272028.
+
+bastion: ocpdevops
+IP: 10.128.46.100
+username: root
+password: Sgk12345
+ssh-key için kullanılacak user ocpprod
+
+Red Hat account: lisans@sgk.gov.tr
+
+Network Conf.
+Vlan: 46
+subnet mask: 255.255.254.0
+subnet: 10.128.46.0/23
+gw: 10.128.46.1
+dns: 10.128.100.101
+domain: sgk.intra
+ntp: 10.128.196.50
+
+Master Nodes
+10.128.46.201
+10.128.46.202
+10.128.46.203
+
+Worker Nodes
+10.128.46.204
+10.128.46.205
+10.128.46.206
+
+
+
+PRODOCPWORKER04	48	128	150	ds-133	00:50:56:88:e8:61	10.128.46.207
+PRODOCPWORKER05	48	128	150	ds-133	00:50:56:88:38:c7	10.128.46.208
+PRODOCPWORKER06	48	128	150	ds-133	00:50:56:88:c6:bb	10.128.46.209
+PRODOCPWORKER07	48	128	150	ds-133	00:50:56:88:a6:86	10.128.46.210
+PRODOCPWORKER08	48	128	150	ds-133	00:50:56:88:5e:c2	10.128.46.211
+PRODOCPWORKER09	48	128	150	ds-133	00:50:56:88:b3:6c	10.128.46.212
+PRODOCPWORKER10	48	128	150	ds-133	00:50:56:88:b7:e1	10.128.46.213
+PRODOCPWORKER11	48	128	150	ds-133	00:50:56:88:65:c8	10.128.46.214
+
+
+
+10.128.106.66 - api.ocpprod.sgk.intra
+10.128.106.66 - api-int.ocpprod.sgk.intra
+10.128.106.67 - *.apps.ocpprod.sgk.intra
+
+
+
+SSH-KEY:
+--------------
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDnl2CBLe9fB+KtGlB5V0AymA2iHSsbSZhI4AzlRkHUQxojfoPd+NE02ACyBW2W/o4C3NBw19MGMxJNK4paqQwYeOCk1lHF5gqxNI2631vv07syhirvns+sW1rIXMs5wJtdhxJOsemDJoKhYjBOAneq9gpZnLlK6LFhenwFlDS5VHGIQ5muaLM/avnU3RXVpBpLFiedphSwfDGo6HDIJL4wmgwO9w9j5qjriqDjyOz+WVucQJ4uUtsiyzrkyeUaZM9deTZo2iMr2DzYOm54oaN8GOAFBAQUIQKwxCLwoGzUjUQhV7sjn++VQsIESj0SM3u8oXewIRSuGerPJ/S3PFZeX01fZXN/umXYlfhznuhKMVlrtmPNE4WOTzzRrWjOhm1vBrRVTlA/oueaARAMZGzDmgrBETMDsgh8vZfty2/0eoCktswgnsrKyURcjOLTxNJQ1Quc4hkDN1qzrUf9xv2119eLlZ696oYEQQhW0PqJFx+14H1fEgIU2TKOnLK6JC0=
